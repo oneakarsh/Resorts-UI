@@ -331,67 +331,70 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <Box sx={{ py: 4, px: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-          Admin Dashboard
+      <Box sx={{ py: 4, px: 2, maxWidth: 1200, mx: 'auto' }}>
+        <Typography variant="h5" component="h1" sx={{ mb: 3, fontWeight: 600, color: '#0a0a0a' }}>
+          Admin
         </Typography>
 
       {/* Overview Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <HotelIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Resorts</Typography>
+          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <HotelIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Total Resorts</Typography>
               </Box>
-              <Typography variant="h4" color="primary">{stats.totalResorts}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.totalResorts}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <BookingIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Total Bookings</Typography>
+          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <BookingIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Total Bookings</Typography>
               </Box>
-              <Typography variant="h4" color="primary">{stats.totalBookings}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.totalBookings}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <BookingIcon sx={{ mr: 1, color: 'warning.main' }} />
-                <Typography variant="h6">Pending</Typography>
+          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <BookingIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Pending</Typography>
               </Box>
-              <Typography variant="h4" sx={{ color: 'warning.main' }}>{stats.pendingBookings}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.pendingBookings}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={1}>
-                <BookingIcon sx={{ mr: 1, color: 'success.main' }} />
-                <Typography variant="h6">Confirmed</Typography>
+          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <BookingIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Confirmed</Typography>
               </Box>
-              <Typography variant="h4" sx={{ color: 'success.main' }}>{stats.confirmedBookings}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.confirmedBookings}</Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       {/* Tabs */}
-      <Paper sx={{ width: '100%' }}>
+      <Paper variant="outlined" sx={{ width: '100%', borderColor: '#e5e5e5', boxShadow: 'none' }}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="fullWidth"
+          sx={{
+            borderBottom: '1px solid #e5e5e5',
+            '& .MuiTab-root': { textTransform: 'none', fontWeight: 500 },
+            '& .Mui-selected': { color: '#0a0a0a' },
+            '& .MuiTabs-indicator': { backgroundColor: '#0a0a0a' },
+          }}
         >
           <Tab icon={<DashboardIcon />} label="Overview" />
           <Tab icon={<HotelIcon />} label="Manage Resorts" />
@@ -404,133 +407,40 @@ export default function AdminDashboard() {
         {/* Overview Tab */}
         <TabPanel value={tabValue} index={0}>
           <Box>
-            {/* Welcome Header */}
-            <Box
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                p: 4,
-                borderRadius: 3,
-                color: 'white',
-                mb: 4,
-                textAlign: 'center'
-              }}
-            >
-              <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
-                Welcome back, {currentUser?.name || 'Admin'}!
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
+                Welcome, {currentUser?.name || 'Admin'}
               </Typography>
-              <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
-                {currentUser?.role === 'superadmin' ? 'Super Admin Dashboard' : 'Admin Dashboard'}
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.8 }}>
+              <Typography variant="body2" sx={{ color: '#737373' }}>
                 {currentUser?.role === 'superadmin'
-                  ? 'Manage users, resorts, and oversee the entire system'
-                  : 'Manage resorts and bookings for your assigned properties'
-                }
+                  ? 'Manage users, resorts, and the system'
+                  : 'Manage resorts and bookings'}
               </Typography>
             </Box>
 
-            {/* System Stats */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-4px)' }
-                }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <HotelIcon sx={{ mr: 1, fontSize: 28 }} />
-                      <Typography variant="h6">Total Resorts</Typography>
-                    </Box>
-                    <Typography variant="h3" fontWeight="bold">{stats.totalResorts}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{
-                  background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                  color: 'white',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-4px)' }
-                }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <BookingIcon sx={{ mr: 1, fontSize: 28 }} />
-                      <Typography variant="h6">Total Bookings</Typography>
-                    </Box>
-                    <Typography variant="h3" fontWeight="bold">{stats.totalBookings}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  color: 'white',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-4px)' }
-                }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <BookingIcon sx={{ mr: 1, fontSize: 28 }} />
-                      <Typography variant="h6">Pending</Typography>
-                    </Box>
-                    <Typography variant="h3" fontWeight="bold">{stats.pendingBookings}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Card sx={{
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  color: 'white',
-                  transition: 'transform 0.2s',
-                  '&:hover': { transform: 'translateY(-4px)' }
-                }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <BookingIcon sx={{ mr: 1, fontSize: 28 }} />
-                      <Typography variant="h6">Confirmed</Typography>
-                    </Box>
-                    <Typography variant="h3" fontWeight="bold">{stats.confirmedBookings}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-
-            {/* Super Admin Additional Stats */}
             {currentUser?.role === 'superadmin' && (
-              <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid container spacing={2} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card sx={{
-                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
-                    color: 'white',
-                    transition: 'transform 0.2s',
-                    '&:hover': { transform: 'translateY(-4px)' }
-                  }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <AdminIcon sx={{ mr: 1, fontSize: 28 }} />
-                        <Typography variant="h6">Total Admins</Typography>
+                  <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+                    <CardContent sx={{ py: 2 }}>
+                      <Box display="flex" alignItems="center" mb={0.5}>
+                        <AdminIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Admins</Typography>
                       </Box>
-                      <Typography variant="h3" fontWeight="bold">
+                      <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
                         {users.filter(u => u.role === 'admin').length}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card sx={{
-                    background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-                    color: 'white',
-                    transition: 'transform 0.2s',
-                    '&:hover': { transform: 'translateY(-4px)' }
-                  }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <SecurityIcon sx={{ mr: 1, fontSize: 28 }} />
-                        <Typography variant="h6">Super Admins</Typography>
+                  <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+                    <CardContent sx={{ py: 2 }}>
+                      <Box display="flex" alignItems="center" mb={0.5}>
+                        <SecurityIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Super Admins</Typography>
                       </Box>
-                      <Typography variant="h3" fontWeight="bold">
+                      <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
                         {users.filter(u => u.role === 'superadmin').length}
                       </Typography>
                     </CardContent>
@@ -539,12 +449,10 @@ export default function AdminDashboard() {
               </Grid>
             )}
 
-            {/* Quick Actions */}
-            <Alert severity="info" sx={{ borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>Quick Actions</Typography>
-              <Typography>
+            <Alert severity="info" sx={{ borderRadius: 1.5, border: '1px solid #e5e5e5', bgcolor: '#fafafa' }} icon={false}>
+              <Typography variant="body2" sx={{ color: '#737373' }}>
                 Use the tabs above to manage resorts and bookings.
-                {currentUser?.role === 'superadmin' && ' As a super admin, you can also manage user accounts.'}
+                {currentUser?.role === 'superadmin' && ' You can also manage user accounts.'}
               </Typography>
             </Alert>
           </Box>
@@ -553,95 +461,65 @@ export default function AdminDashboard() {
         {/* Manage Resorts Tab */}
         <TabPanel value={tabValue} index={1}>
           <Box>
-            {/* Header */}
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={4}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                p: 3,
-                borderRadius: 2,
-                color: 'white'
-              }}
-            >
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
               <Box>
-                <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
-                  <HotelIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Resort Management
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
+                  Resorts
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                  Create and manage resort properties
+                <Typography variant="body2" sx={{ color: '#737373' }}>
+                  Create and manage properties
                 </Typography>
               </Box>
               <Button
                 variant="contained"
+                size="small"
                 startIcon={<AddIcon />}
                 onClick={() => handleOpenResortDialog()}
                 sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                  }
+                  bgcolor: '#0a0a0a',
+                  fontWeight: 500,
+                  '&:hover': { bgcolor: '#262626' },
                 }}
               >
-                Add Resort
+                Add resort
               </Button>
             </Box>
 
-            {/* Resorts Table */}
-            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-              <Table>
-                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Location</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Price/Night</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Rooms</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Actions</TableCell>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#fafafa' }}>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Location</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Price/Night</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Rooms</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {resorts.map((resort, index) => (
                     <TableRow
                       key={resort.id ?? resort._id ?? index}
-                      sx={{
-                        '&:hover': { backgroundColor: '#f9f9f9' },
-                        transition: 'background-color 0.2s'
-                      }}
+                      sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}
                     >
-                      <TableCell sx={{ fontWeight: 500 }}>{resort.name}</TableCell>
-                      <TableCell>{resort.location}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        ${resort.pricePerNight}
-                      </TableCell>
-                      <TableCell>{resort.rooms}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.name}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.location}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>${resort.pricePerNight}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.rooms}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5' }}>
                         <Button
                           size="small"
                           startIcon={<EditIcon />}
                           onClick={() => handleOpenResortDialog(resort)}
-                          sx={{
-                            mr: 1,
-                            backgroundColor: '#1976d2',
-                            color: 'white',
-                            '&:hover': { backgroundColor: '#1565c0' }
-                          }}
+                          sx={{ mr: 0.5, color: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }}
                         >
                           Edit
                         </Button>
                         <Button
                           size="small"
-                          color="error"
                           startIcon={<DeleteIcon />}
                           onClick={() => handleDeleteResort(resort.id ?? resort._id!)}
-                          sx={{
-                            backgroundColor: '#d32f2f',
-                            color: 'white',
-                            '&:hover': { backgroundColor: '#b71c1c' }
-                          }}
+                          sx={{ color: '#dc2626', fontWeight: 500, '&:hover': { bgcolor: 'rgba(220,38,38,0.08)' } }}
                         >
                           Delete
                         </Button>
@@ -654,13 +532,9 @@ export default function AdminDashboard() {
 
             {resorts.length === 0 && (
               <Box textAlign="center" py={6}>
-                <HotelIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
-                <Typography variant="h6" color="textSecondary">
-                  No resorts found
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Start by adding your first resort property
-                </Typography>
+                <HotelIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
+                <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No resorts</Typography>
+                <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Add your first resort above</Typography>
               </Box>
             )}
           </Box>
@@ -669,100 +543,50 @@ export default function AdminDashboard() {
         {/* Manage Bookings Tab */}
         <TabPanel value={tabValue} index={2}>
           <Box>
-            {/* Header */}
-            <Box
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                p: 3,
-                borderRadius: 2,
-                color: 'white',
-                mb: 4,
-                textAlign: 'center'
-              }}
-            >
-              <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
-                <BookingIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Booking Management
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Review and manage customer reservations
-              </Typography>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Bookings</Typography>
+              <Typography variant="body2" sx={{ color: '#737373' }}>Review and manage reservations</Typography>
             </Box>
 
-            {/* Bookings Table */}
-            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-              <Table>
-                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>ID</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Resort</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Check-in</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Check-out</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Guests</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Total Price</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Actions</TableCell>
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: '#fafafa' }}>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>ID</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Resort</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Check-in</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Check-out</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Guests</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Total</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {bookings.map((booking) => (
-                    <TableRow
-                      key={booking.id}
-                      sx={{
-                        '&:hover': { backgroundColor: '#f9f9f9' },
-                        transition: 'background-color 0.2s'
-                      }}
-                    >
-                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                        {booking.id.slice(-8)}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>
-                        {booking.resort?.name || 'Unknown'}
-                      </TableCell>
-                      <TableCell>{new Date(booking.checkInDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(booking.checkOutDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{booking.numberOfGuests}</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        ${booking.totalPrice}
-                      </TableCell>
-                      <TableCell>
+                    <TableRow key={booking.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{booking.id.slice(-8)}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{booking.resort?.name || '—'}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkInDate).toLocaleDateString()}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkOutDate).toLocaleDateString()}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{booking.numberOfGuests}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>${booking.totalPrice}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5' }}>
                         <Chip
                           label={booking.status}
                           color={getStatusColor(booking.status)}
                           size="small"
-                          variant="filled"
-                          sx={{
-                            fontWeight: 'bold',
-                            textTransform: 'capitalize'
-                          }}
+                          variant="outlined"
+                          sx={{ fontWeight: 500, textTransform: 'capitalize', fontSize: '0.75rem' }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5' }}>
                         {booking.status === 'pending' && (
                           <Box>
-                            <Button
-                              size="small"
-                              color="success"
-                              onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')}
-                              sx={{
-                                mr: 1,
-                                backgroundColor: '#2e7d32',
-                                color: 'white',
-                                '&:hover': { backgroundColor: '#1b5e20' }
-                              }}
-                            >
+                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')} sx={{ mr: 0.5, color: '#16a34a', fontWeight: 500 }}>
                               Confirm
                             </Button>
-                            <Button
-                              size="small"
-                              color="error"
-                              onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')}
-                              sx={{
-                                backgroundColor: '#d32f2f',
-                                color: 'white',
-                                '&:hover': { backgroundColor: '#b71c1c' }
-                              }}
-                            >
+                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')} sx={{ color: '#dc2626', fontWeight: 500 }}>
                               Cancel
                             </Button>
                           </Box>
@@ -776,13 +600,9 @@ export default function AdminDashboard() {
 
             {bookings.length === 0 && (
               <Box textAlign="center" py={6}>
-                <BookingIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
-                <Typography variant="h6" color="textSecondary">
-                  No bookings found
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Bookings will appear here once customers make reservations
-                </Typography>
+                <BookingIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
+                <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No bookings</Typography>
+                <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Reservations will appear here</Typography>
               </Box>
             )}
           </Box>
@@ -792,148 +612,68 @@ export default function AdminDashboard() {
         {currentUser?.role === 'superadmin' && (
           <TabPanel value={tabValue} index={3}>
             <Box>
-              {/* Header with better styling */}
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mb={4}
-                sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  p: 3,
-                  borderRadius: 2,
-                  color: 'white'
-                }}
-              >
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Box>
-                  <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
-                    <SecurityIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    User Management
-                  </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                    Manage admin users and their permissions
-                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Users</Typography>
+                  <Typography variant="body2" sx={{ color: '#737373' }}>Manage admin accounts</Typography>
                 </Box>
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<PersonAddIcon />}
                   onClick={() => handleOpenUserDialog()}
-                  sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(10px)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                    }
-                  }}
+                  sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}
                 >
-                  Add Admin
+                  Add admin
                 </Button>
               </Box>
 
-              {/* Stats Cards for Users */}
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <AdminIcon sx={{ mr: 1 }} />
-                        <Typography variant="h6">Total Admins</Typography>
-                      </Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {users.filter(u => u.role === 'admin').length}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card sx={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)', color: 'white' }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <SecurityIcon sx={{ mr: 1 }} />
-                        <Typography variant="h6">Super Admins</Typography>
-                      </Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {users.filter(u => u.role === 'superadmin').length}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card sx={{ background: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)', color: 'white' }}>
-                    <CardContent>
-                      <Box display="flex" alignItems="center" mb={1}>
-                        <PeopleIcon sx={{ mr: 1 }} />
-                        <Typography variant="h6">Active Users</Typography>
-                      </Box>
-                      <Typography variant="h4" fontWeight="bold">
-                        {users.length}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Enhanced Users Table */}
-              <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-                <Table>
-                  <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Email</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Phone</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Role</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Actions</TableCell>
+              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#fafafa' }}>
+                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Email</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Phone</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Role</TableCell>
+                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow
-                        key={user.id}
-                        sx={{
-                          '&:hover': { backgroundColor: '#f9f9f9' },
-                          transition: 'background-color 0.2s'
-                        }}
-                      >
-                        <TableCell sx={{ fontWeight: 500 }}>{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.phone || 'N/A'}</TableCell>
-                        <TableCell>
+                      <TableRow key={user.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                        <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{user.name}</TableCell>
+                        <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{user.email}</TableCell>
+                        <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{user.phone || '—'}</TableCell>
+                        <TableCell sx={{ borderColor: '#e5e5e5' }}>
                           <Chip
                             label={user.role}
-                            color={user.role === 'superadmin' ? 'error' : 'primary'}
                             size="small"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
-                              fontWeight: 'bold',
-                              textTransform: 'capitalize'
+                              fontWeight: 500,
+                              textTransform: 'capitalize',
+                              fontSize: '0.75rem',
+                              borderColor: '#e5e5e5',
+                              color: '#0a0a0a',
                             }}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ borderColor: '#e5e5e5' }}>
                           <Button
                             size="small"
                             startIcon={<EditIcon />}
                             onClick={() => handleOpenUserDialog(user)}
-                            sx={{
-                              mr: 1,
-                              backgroundColor: '#1976d2',
-                              color: 'white',
-                              '&:hover': { backgroundColor: '#1565c0' }
-                            }}
+                            sx={{ mr: 0.5, color: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }}
                           >
                             Edit
                           </Button>
                           {user.role !== 'superadmin' && (
                             <Button
                               size="small"
-                              color="error"
                               startIcon={<DeleteIcon />}
                               onClick={() => handleDeleteUser(user.id)}
-                              sx={{
-                                backgroundColor: '#d32f2f',
-                                color: 'white',
-                                '&:hover': { backgroundColor: '#b71c1c' }
-                              }}
+                              sx={{ color: '#dc2626', fontWeight: 500, '&:hover': { bgcolor: 'rgba(220,38,38,0.08)' } }}
                             >
                               Delete
                             </Button>
@@ -947,13 +687,9 @@ export default function AdminDashboard() {
 
               {users.length === 0 && (
                 <Box textAlign="center" py={6}>
-                  <PeopleIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
-                  <Typography variant="h6" color="textSecondary">
-                    No users found
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Start by adding your first admin user
-                  </Typography>
+                  <PeopleIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
+                  <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No users</Typography>
+                  <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Add an admin above</Typography>
                 </Box>
               )}
             </Box>
@@ -963,9 +699,15 @@ export default function AdminDashboard() {
     </Box>
 
       {/* Resort Dialog */}
-      <Dialog open={resortDialog} onClose={handleCloseResortDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingResort ? 'Edit Resort' : 'Add New Resort'}
+      <Dialog
+        open={resortDialog}
+        onClose={handleCloseResortDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, border: '1px solid #e5e5e5' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: '1.125rem', color: '#0a0a0a' }}>
+          {editingResort ? 'Edit resort' : 'Add resort'}
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -1051,9 +793,9 @@ export default function AdminDashboard() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseResortDialog}>Cancel</Button>
-          <Button onClick={handleSaveResort} variant="contained">
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCloseResortDialog} sx={{ color: '#737373', fontWeight: 500 }}>Cancel</Button>
+          <Button onClick={handleSaveResort} variant="contained" sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}>
             {editingResort ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
@@ -1065,32 +807,12 @@ export default function AdminDashboard() {
         onClose={handleCloseUserDialog}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          }
-        }}
+        PaperProps={{ sx: { borderRadius: 2, border: '1px solid #e5e5e5' } }}
       >
-        <DialogTitle
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            textAlign: 'center',
-            py: 3
-          }}
-        >
-          <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-            {editingUser ? <EditIcon sx={{ mr: 1 }} /> : <PersonAddIcon sx={{ mr: 1 }} />}
-            <Typography variant="h5" fontWeight="bold">
-              {editingUser ? 'Edit User' : 'Add New Admin'}
-            </Typography>
-          </Box>
-          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            {editingUser ? 'Update user information and permissions' : 'Create a new admin user account'}
-          </Typography>
+        <DialogTitle sx={{ fontWeight: 600, fontSize: '1.125rem', color: '#0a0a0a', pt: 3, pb: 0 }}>
+          {editingUser ? 'Edit user' : 'Add admin'}
         </DialogTitle>
-        <DialogContent sx={{ p: 4 }}>
+        <DialogContent sx={{ p: 3 }}>
           <Grid container spacing={3} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12 }}>
               <TextField
@@ -1178,30 +900,13 @@ export default function AdminDashboard() {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button
-            onClick={handleCloseUserDialog}
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              textTransform: 'none'
-            }}
-          >
-            Cancel
-          </Button>
+          <Button onClick={handleCloseUserDialog} sx={{ color: '#737373', fontWeight: 500 }}>Cancel</Button>
           <Button
             onClick={handleSaveUser}
             variant="contained"
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              textTransform: 'none',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-              }
-            }}
+            sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}
           >
-            {editingUser ? 'Update User' : 'Create Admin'}
+            {editingUser ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>

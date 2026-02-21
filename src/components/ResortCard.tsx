@@ -13,8 +13,8 @@ import {
   IconButton,
   Stack,
 } from '@mui/material';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import { Resort } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -34,77 +34,64 @@ export default function ResortCard({ resort }: ResortCardProps) {
 
   return (
     <Card
+      elevation={0}
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
-        transition: 'all 0.2s ease',
-        position: 'relative',
-        boxShadow: 3,
+        border: '1px solid #e5e5e5',
+        overflow: 'hidden',
+        transition: 'border-color 0.2s, box-shadow 0.2s',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 6,
+          borderColor: '#d4d4d4',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
         },
       }}
     >
-      {/* Wishlist */}
-      <IconButton
-        size="small"
-        sx={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          bgcolor: 'white',
-          zIndex: 2,
-        }}
-        onClick={() => setWishlisted(!wishlisted)}
-      >
-        {wishlisted ? (
-          <FavoriteIcon fontSize="small" color="error" />
-        ) : (
-          <FavoriteBorderIcon fontSize="small" />
-        )}
-      </IconButton>
+      <Box sx={{ position: 'relative' }}>
+        <IconButton
+          size="small"
+          onClick={() => setWishlisted(!wishlisted)}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: 'rgba(255,255,255,0.9)',
+            zIndex: 1,
+            '&:hover': { bgcolor: '#fff' },
+          }}
+        >
+          {wishlisted ? (
+            <FavoriteIcon fontSize="small" sx={{ color: '#dc2626' }} />
+          ) : (
+            <FavoriteBorderIcon fontSize="small" sx={{ color: '#737373' }} />
+          )}
+        </IconButton>
 
-      {/* Image */}
-      <CardMedia
-        sx={{
-          height: 160,
-        }}
-        image={
-          resort.images?.[0] ??
-          `https://via.placeholder.com/400x300?text=${encodeURIComponent(
-            resort.name
-          )}`
-        }
-      />
+        <CardMedia
+          sx={{ height: 180 }}
+          image={
+            resort.images?.[0] ??
+            `https://via.placeholder.com/400x300?text=${encodeURIComponent(resort.name)}`
+          }
+        />
+      </Box>
 
-      <CardContent sx={{ flexGrow: 1, p: 1.5 }}>
-        <Stack spacing={0.75}>
-          <Box display="flex" justifyContent="space-between" gap={1}>
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <Stack spacing={1}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
             <Typography
               variant="subtitle1"
               fontWeight={600}
               noWrap
-              sx={{ flexGrow: 1 }}
+              sx={{ flexGrow: 1, fontSize: '0.9375rem', letterSpacing: '-0.01em' }}
             >
               {resort.name}
             </Typography>
-
-            <Typography
-              variant="subtitle2"
-              color="primary"
-              fontWeight={600}
-              whiteSpace="nowrap"
-            >
+            <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0a0a0a', whiteSpace: 'nowrap' }}>
               ${resort.pricePerNight}
-              <Typography
-                component="span"
-                variant="caption"
-                color="text.secondary"
-              >
-                {' '}
+              <Typography component="span" variant="caption" sx={{ color: '#737373', fontWeight: 400 }}>
                 /night
               </Typography>
             </Typography>
@@ -116,36 +103,46 @@ export default function ResortCard({ resort }: ResortCardProps) {
                 key={amenity}
                 label={amenity}
                 size="small"
-                sx={{ fontSize: '0.7rem', height: 22 }}
+                variant="outlined"
+                sx={{
+                  fontSize: '0.6875rem',
+                  height: 20,
+                  borderColor: '#e5e5e5',
+                  color: '#737373',
+                }}
               />
             ))}
           </Box>
 
-          <Typography variant="caption" color="text.secondary">
-            📍 {resort.location}
+          <Typography variant="caption" sx={{ color: '#737373' }}>
+            {resort.location}
           </Typography>
-
-          <Typography variant="caption" color="text.secondary">
-            👥 {resort.maxGuests} · 🛏️ {resort.rooms} rooms
+          <Typography variant="caption" sx={{ color: '#737373' }}>
+            {resort.maxGuests} guests · {resort.rooms} rooms
           </Typography>
         </Stack>
       </CardContent>
 
-      <CardActions sx={{ px: 1.5, pb: 1.5 }}>
+      <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
         <Button
           fullWidth
-          variant="contained"
+          variant="outlined"
           size="medium"
           onClick={handleBookNow}
           sx={{
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '0.9rem',
+            borderRadius: 1.5,
+            fontWeight: 500,
+            fontSize: '0.875rem',
             py: 1,
+            borderColor: '#0a0a0a',
+            color: '#0a0a0a',
+            '&:hover': {
+              borderColor: '#0a0a0a',
+              bgcolor: 'rgba(0,0,0,0.04)',
+            },
           }}
         >
-          View Resort
+          View resort
         </Button>
       </CardActions>
     </Card>

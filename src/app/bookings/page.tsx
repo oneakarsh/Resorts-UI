@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  Container,
   Typography,
   Table,
   TableBody,
@@ -38,35 +37,46 @@ const mockBookings = [
 
 export default function BookingsPage() {
   return (
-    <Box sx={{ py: 4, px: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
-        My Bookings
+    <Box sx={{ py: 4, px: 2, maxWidth: 900, mx: 'auto' }}>
+      <Typography variant="h5" component="h1" sx={{ mb: 3, fontWeight: 600, color: '#0a0a0a' }}>
+        My bookings
       </Typography>
 
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
+        <Table size="small">
           <TableHead>
-            <TableRow>
-              <TableCell>Booking ID</TableCell>
-              <TableCell>Resort</TableCell>
-              <TableCell>Check-in</TableCell>
-              <TableCell>Check-out</TableCell>
-              <TableCell>Guests</TableCell>
-              <TableCell>Total</TableCell>
-              <TableCell>Status</TableCell>
+            <TableRow sx={{ bgcolor: '#fafafa' }}>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>ID</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Resort</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Check-in</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Check-out</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Guests</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Total</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {mockBookings.map((b) => (
-              <TableRow key={b.id}>
-                <TableCell>{b.id}</TableCell>
-                <TableCell>{b.resort}</TableCell>
-                <TableCell>{new Date(b.checkIn).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(b.checkOut).toLocaleDateString()}</TableCell>
-                <TableCell>{b.guests}</TableCell>
-                <TableCell>${b.total}</TableCell>
-                <TableCell>
-                  <Chip label={b.status} color={b.status === 'confirmed' ? 'success' : 'warning'} size="small" />
+              <TableRow key={b.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem', fontFamily: 'monospace' }}>{b.id}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{b.resort}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(b.checkIn).toLocaleDateString()}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(b.checkOut).toLocaleDateString()}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{b.guests}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem', fontWeight: 500 }}>${b.total}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5' }}>
+                  <Chip
+                    label={b.status}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      fontWeight: 500,
+                      textTransform: 'capitalize',
+                      fontSize: '0.75rem',
+                      borderColor: '#e5e5e5',
+                      color: b.status === 'confirmed' ? '#16a34a' : '#737373',
+                    }}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -74,11 +84,9 @@ export default function BookingsPage() {
         </Table>
       </TableContainer>
 
-      <Box sx={{ mt: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          This is a mock view. Real bookings will appear here when connected to the API.
-        </Typography>
-      </Box>
+      <Typography variant="body2" sx={{ color: '#737373', mt: 2 }}>
+        Mock data. Connect to the API to load real bookings.
+      </Typography>
     </Box>
   );
 }

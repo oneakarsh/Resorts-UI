@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -53,6 +52,35 @@ export default function BookingPage() {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [cardName, setCardName] = useState('');
+
+  const getNearbyAttractions = (location: string) => {
+    switch (location.toLowerCase()) {
+      case 'maldives':
+        return [
+          { name: 'Coral Garden Reef', distance: '1.8 km', type: 'Snorkeling' },
+          { name: 'Lagoon Sandbank', distance: '3.2 km', type: 'Beach' },
+          { name: 'Sunset Pier', distance: '0.9 km', type: 'Viewpoint' },
+        ];
+      case 'hawaii':
+        return [
+          { name: 'Hidden Bay Lookout', distance: '2.4 km', type: 'Viewpoint' },
+          { name: 'Tropical Falls Trail', distance: '4.1 km', type: 'Hiking' },
+          { name: 'Local Farmers Market', distance: '1.2 km', type: 'Market' },
+        ];
+      case 'dubai':
+        return [
+          { name: 'Desert Dune Point', distance: '5.0 km', type: 'Desert tour' },
+          { name: 'Old Souk District', distance: '7.3 km', type: 'Market' },
+          { name: 'City Skyline Deck', distance: '3.6 km', type: 'Viewpoint' },
+        ];
+      default:
+        return [
+          { name: 'Old Town Square', distance: '1.4 km', type: 'Historic' },
+          { name: 'Riverside Promenade', distance: '2.1 km', type: 'Walk' },
+          { name: 'Local Art Museum', distance: '2.9 km', type: 'Culture' },
+        ];
+    }
+  };
 
   useEffect(() => {
     const fetchResort = async () => {
@@ -139,75 +167,98 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+        <CircularProgress sx={{ color: '#0a0a0a' }} />
       </Box>
     );
   }
 
   if (error && !resort) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
+      <Box sx={{ maxWidth: 560, mx: 'auto', px: 2, py: 4 }}>
+        <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+      </Box>
     );
   }
 
   if (!resort) {
     return (
-      <Container maxWidth="md" sx={{ mt: 4 }}>
-        <Alert severity="error">Resort not found</Alert>
-      </Container>
+      <Box sx={{ maxWidth: 560, mx: 'auto', px: 2, py: 4 }}>
+        <Alert severity="error" sx={{ borderRadius: 2 }}>Resort not found</Alert>
+      </Box>
     );
   }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ py: 4, px: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+      <Box sx={{ py: 4, px: 2, maxWidth: 1100, mx: 'auto' }}>
+        <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
           Book {resort.name}
         </Typography>
-        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
-          ID: {resort.id ?? resort._id}
+        <Typography variant="body2" sx={{ color: '#737373', mb: 2 }}>
+          {resort.location}
         </Typography>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={3}>
           {/* Resort Details */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Card>
+            <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none', borderRadius: 2, overflow: 'hidden' }}>
               <CardMedia
                 component="img"
-                height="300"
+                height="280"
                 image={resort.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
                 alt={resort.name}
               />
-              <CardContent>
-                <Typography variant="h5" gutterBottom>
+              <CardContent sx={{ p: 2.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
                   {resort.name}
                 </Typography>
-                <Typography variant="body1" color="text.secondary" paragraph>
+                <Typography variant="body2" sx={{ color: '#737373', mb: 1.5, lineHeight: 1.6 }}>
                   {resort.description}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  📍 {resort.location}
+                <Typography variant="body2" sx={{ color: '#737373', mb: 1.5 }}>
+                  {resort.location}
                 </Typography>
-                <Typography variant="h6" color="primary" sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 2 }}>
                   ${resort.pricePerNight} per night
                 </Typography>
 
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Available Amenities
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
+                  Amenities
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                  {resort.amenities.map((amenity) => (
+                    <Chip
+                      key={amenity}
+                      label={amenity}
+                      size="small"
+                      variant={selectedAmenities.includes(amenity) ? 'filled' : 'outlined'}
+                      onClick={() => handleAmenityToggle(amenity)}
+                      sx={{
+                        cursor: 'pointer',
+                        borderColor: '#e5e5e5',
+                        bgcolor: selectedAmenities.includes(amenity) ? '#0a0a0a' : 'transparent',
+                        color: selectedAmenities.includes(amenity) ? '#fff' : '#737373',
+                        fontWeight: 500,
+                        '&:hover': { borderColor: '#0a0a0a' },
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
+                    Nearby attractions
                   </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {resort.amenities.map((amenity) => (
-                      <Chip
-                        key={amenity}
-                        label={amenity}
-                        variant={selectedAmenities.includes(amenity) ? 'filled' : 'outlined'}
-                        onClick={() => handleAmenityToggle(amenity)}
-                        sx={{ cursor: 'pointer' }}
-                      />
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {getNearbyAttractions(resort.location).map((attraction) => (
+                      <Typography
+                        key={attraction.name}
+                        variant="body2"
+                        sx={{ color: '#737373' }}
+                      >
+                        {attraction.name} · {attraction.type} · {attraction.distance}
+                      </Typography>
                     ))}
                   </Box>
                 </Box>
@@ -217,9 +268,9 @@ export default function BookingPage() {
 
           {/* Booking Form */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Booking Details
+            <Paper variant="outlined" sx={{ p: 2.5, borderColor: '#e5e5e5', boxShadow: 'none', borderRadius: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 2 }}>
+                Booking details
               </Typography>
 
               {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -283,60 +334,77 @@ export default function BookingPage() {
                 {!showPayment ? (
                   <Button
                     variant="contained"
-                    size="large"
+                    size="medium"
                     onClick={handleProceedToPayment}
                     fullWidth
+                    sx={{
+                      py: 1.25,
+                      fontWeight: 500,
+                      bgcolor: '#0a0a0a',
+                      '&:hover': { bgcolor: '#262626' },
+                    }}
                   >
-                    Proceed to Payment
+                    Proceed to payment
                   </Button>
                 ) : (
                   <>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="h6" gutterBottom>
-                      Payment Details
+                    <Divider sx={{ my: 2, borderColor: '#e5e5e5' }} />
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1.5 }}>
+                      Payment
                     </Typography>
 
                     <TextField
-                      label="Card Number"
+                      label="Card number"
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
                       fullWidth
+                      size="small"
                       placeholder="1234 5678 9012 3456"
+                      sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
                     />
 
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
                       <TextField
-                        label="Expiry Date"
+                        label="Expiry"
                         value={expiryDate}
                         onChange={(e) => setExpiryDate(e.target.value)}
                         placeholder="MM/YY"
-                        sx={{ flex: 1 }}
+                        size="small"
+                        sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
                       />
                       <TextField
                         label="CVV"
                         value={cvv}
                         onChange={(e) => setCvv(e.target.value)}
                         placeholder="123"
-                        sx={{ flex: 1 }}
+                        size="small"
+                        sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
                       />
                     </Box>
 
                     <TextField
-                      label="Cardholder Name"
+                      label="Name on card"
                       value={cardName}
                       onChange={(e) => setCardName(e.target.value)}
                       fullWidth
+                      size="small"
+                      sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
                     />
 
                     <Button
                       variant="contained"
-                      size="large"
+                      size="medium"
                       onClick={handleBookingSubmit}
                       disabled={bookingLoading}
                       fullWidth
-                      sx={{ mt: 2 }}
+                      sx={{
+                        py: 1.25,
+                        fontWeight: 500,
+                        bgcolor: '#0a0a0a',
+                        '&:hover': { bgcolor: '#262626' },
+                      }}
                     >
-                      {bookingLoading ? <CircularProgress size={20} /> : 'Complete Booking'}
+                      {bookingLoading ? <CircularProgress size={20} color="inherit" /> : 'Complete booking'}
                     </Button>
                   </>
                 )}

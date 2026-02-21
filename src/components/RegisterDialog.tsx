@@ -10,7 +10,8 @@ import {
   Button,
   Typography,
   Alert,
-  CircularProgress, IconButton,
+  CircularProgress,
+  IconButton,
   InputAdornment,
   Box,
 } from '@mui/material';
@@ -39,6 +40,7 @@ export default function RegisterDialog({
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -51,53 +53,62 @@ export default function RegisterDialog({
       const res = await authAPI.register({ name, email, password, confirmPassword, phone });
       const data = res.data;
       if (data) {
-        // Registration successful, switch to login
         onSuccess();
         onSwitchToLogin();
       } else {
-        setError(data?.message || 'Registration failed');
+        setError((data as { message?: string })?.message || 'Registration failed');
       }
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(error?.response?.data?.message || error?.message || 'Registration failed');
+      const errObj = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(errObj?.response?.data?.message || errObj?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
+  const inputSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 1.5,
+      '& fieldset': { borderColor: '#e5e5e5' },
+      '&.Mui-focused fieldset': { borderColor: '#0a0a0a' },
+    },
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ textAlign: 'center', fontWeight: 600, color: '#1976d2', fontSize: '1.5rem' }}>
-        Create Account
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          border: '1px solid #e5e5e5',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+        },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 600, fontSize: '1.25rem', color: '#0a0a0a', pt: 3, pb: 0 }}>
+        Create account
       </DialogTitle>
-      <DialogContent sx={{ px: 4, pb: 2 }}>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-          Join Scaper and start booking amazing resorts
+      <DialogContent sx={{ px: 3, pt: 2, pb: 1 }}>
+        <Typography variant="body2" sx={{ color: '#737373', mb: 2 }}>
+          Join Scaper and start booking resorts
         </Typography>
         {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 1.5 }} onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
         <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
-            label="Full Name"
+            label="Full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             fullWidth
             required
-            variant="outlined"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: '#1976d2',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#1976d2',
-                },
-              },
-            }}
+            size="small"
+            sx={inputSx}
           />
           <TextField
             label="Email"
@@ -106,36 +117,16 @@ export default function RegisterDialog({
             onChange={(e) => setEmail(e.target.value)}
             fullWidth
             required
-            variant="outlined"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: '#1976d2',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#1976d2',
-                },
-              },
-            }}
+            size="small"
+            sx={inputSx}
           />
           <TextField
             label="Phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             fullWidth
-            variant="outlined"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: '#1976d2',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#1976d2',
-                },
-              },
-            }}
+            size="small"
+            sx={inputSx}
           />
           <TextField
             label="Password"
@@ -144,82 +135,58 @@ export default function RegisterDialog({
             onChange={(e) => setPassword(e.target.value)}
             fullWidth
             required
-            variant="outlined"
+            size="small"
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    edge="end"
-                  >
+                  <IconButton onClick={() => setShowPassword((p) => !p)} edge="end" size="small">
                     {showPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               ),
             }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': { borderColor: '#1976d2' },
-                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-              },
-            }}
+            sx={inputSx}
           />
-
           <TextField
-            label="Confirm Password"
+            label="Confirm password"
             type={showConfirmPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             fullWidth
             required
-            variant="outlined"
+            size="small"
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    edge="end"
-                  >
+                  <IconButton onClick={() => setShowConfirmPassword((p) => !p)} edge="end" size="small">
                     {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               ),
             }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': { borderColor: '#1976d2' },
-                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-              },
-            }}
+            sx={inputSx}
           />
         </Box>
       </DialogContent>
-      <DialogActions sx={{ flexDirection: 'column', px: 4, pb: 3, gap: 2 }}>
+      <DialogActions sx={{ flexDirection: 'column', px: 3, pb: 3, pt: 0, gap: 2 }}>
         <Button
           type="submit"
           variant="contained"
           fullWidth
-          size="large"
+          size="medium"
           disabled={loading}
           onClick={handleSubmit}
           sx={{
-            py: 1.5,
-            borderRadius: 3,
-            fontWeight: 600,
-            backgroundColor: '#1976d2',
-            '&:hover': {
-              backgroundColor: '#1565c0',
-              transform: 'translateY(-1px)',
-              boxShadow: '0 4px 12px rgba(25,118,210,0.3)',
-            },
-            transition: 'all 0.2s ease',
+            py: 1.25,
+            borderRadius: 1.5,
+            fontWeight: 500,
+            bgcolor: '#0a0a0a',
+            '&:hover': { bgcolor: '#262626' },
           }}
         >
-          {loading ? <CircularProgress size={20} color="inherit" /> : 'Create Account'}
+          {loading ? <CircularProgress size={20} color="inherit" /> : 'Create account'}
         </Button>
-        <Typography align="center" sx={{ fontSize: '0.9rem' }}>
+        <Typography variant="body2" sx={{ color: '#737373' }}>
           Already have an account?{' '}
           <Button
             onClick={onSwitchToLogin}
@@ -227,11 +194,9 @@ export default function RegisterDialog({
               textTransform: 'none',
               p: 0,
               minWidth: 'auto',
-              color: '#1976d2',
+              color: '#0a0a0a',
               fontWeight: 500,
-              '&:hover': {
-                textDecoration: 'underline',
-              },
+              '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
             }}
           >
             Sign in

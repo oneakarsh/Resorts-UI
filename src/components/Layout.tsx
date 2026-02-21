@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Container, Typography, Skeleton, Grid } from '@mui/material';
+import { Box, Typography, Skeleton, Grid } from '@mui/material';
 import Navbar from './Navbar';
 import ResortCard from './ResortCard';
 import { Resort } from '@/types';
@@ -22,11 +22,9 @@ export default function Layout({ children }: LayoutProps) {
         setLoading(true);
         const response = await resortAPI.getAll();
         const payload = response?.data?.data ?? response?.data;
-        console.log('Resorts fetched:', payload);
         setResorts(Array.isArray(payload) ? payload : []);
       } catch (error) {
         console.error("Failed to fetch resorts:", error);
-        // Use mock data for development (with coordinates added above)
         setResorts([
           {
             id: '1',
@@ -115,36 +113,64 @@ export default function Layout({ children }: LayoutProps) {
     fetchResorts();
   }, []);
 
-  // hide resort grid on all pages except home and resorts
   const pathname = usePathname() ?? '';
-  // show grid on exact '/' and any route starting with '/resorts'
-  const showResortGrid = pathname === '/' || pathname === '/resorts' || pathname.startsWith('/resorts/');
+  const showResortGrid =
+    pathname === '/' || pathname === '/resorts' || pathname.startsWith('/resorts/');
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#fafafa' }}>
       <Navbar />
-      <Box component="main" sx={{ flexGrow: 1, py: 0, backgroundColor: '#fafafa' }}>
+      <Box component="main" sx={{ flexGrow: 1 }}>
         {children}
         {showResortGrid && (
-          <Box sx={{ py: 4, px: 2 }}>
-            <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
-              Featured Resorts
-            </Typography>
+          <Box sx={{ py: 5, px: 2, maxWidth: 1200, mx: 'auto' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                mb: 3,
+                gap: 1.5,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  color: '#0a0a0a',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                Featured resorts
+              </Typography>
+              <Typography
+                component="a"
+                href="/resorts"
+                sx={{
+                  fontSize: '0.875rem',
+                  color: '#737373',
+                  textDecoration: 'none',
+                  '&:hover': { color: '#0a0a0a' },
+                }}
+              >
+                View all resorts
+              </Typography>
+            </Box>
 
             {loading ? (
-              <Grid container spacing={3}>
+              <Grid container spacing={2}>
                 {Array.from({ length: 6 }).map((_, index) => (
                   <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
-                    <Skeleton variant="text" sx={{ mt: 1 }} />
-                    <Skeleton variant="text" width="60%" />
+                    <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+                    <Skeleton variant="text" sx={{ mt: 1.5 }} />
+                    <Skeleton variant="text" width="50%" />
                   </Grid>
                 ))}
               </Grid>
             ) : (
-              <Grid container spacing={1.5}>
+              <Grid container spacing={2}>
                 {resorts.map((resort, index) => (
-                  <Grid key={resort.id ?? resort._id ?? `resort-${index}`} size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Grid key={resort.id ?? resort._id ?? `resort-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
                     <ResortCard resort={resort} />
                   </Grid>
                 ))}
@@ -156,18 +182,16 @@ export default function Layout({ children }: LayoutProps) {
       <Box
         component="footer"
         sx={{
-          backgroundColor: '#1976d2',
-          color: 'white',
-          py: 3,
-          mt: 4,
+          borderTop: '1px solid #e5e5e5',
+          py: 2.5,
+          mt: 'auto',
           textAlign: 'center',
+          bgcolor: '#fff',
         }}
       >
-        <Box sx={{ px: 2 }}>
-          <Typography variant="body1">
-            &copy; 2025 Scaper - Resort Booking System. All rights reserved.
-          </Typography>
-        </Box>
+        <Typography variant="body2" sx={{ color: '#737373' }}>
+          © {new Date().getFullYear()} Scaper. All rights reserved.
+        </Typography>
       </Box>
     </Box>
   );

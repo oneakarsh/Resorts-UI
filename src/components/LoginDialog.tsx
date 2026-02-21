@@ -51,7 +51,7 @@ export default function LoginDialog({
       } else if (result?.ok) {
         onSuccess();
       }
-    } catch (err: unknown) {
+    } catch {
       setError('Login failed');
     } finally {
       setLoading(false);
@@ -59,16 +59,28 @@ export default function LoginDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ textAlign: 'center', fontWeight: 600, color: '#1976d2', fontSize: '1.5rem' }}>
-        Welcome Back
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          border: '1px solid #e5e5e5',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+        },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 600, fontSize: '1.25rem', color: '#0a0a0a', pt: 3, pb: 0 }}>
+        Log in
       </DialogTitle>
-      <DialogContent sx={{ px: 4, pb: 2 }}>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
+      <DialogContent sx={{ px: 3, pt: 2, pb: 1 }}>
+        <Typography variant="body2" sx={{ color: '#737373', mb: 2 }}>
           Sign in to your Scaper account
         </Typography>
         {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 1.5 }} onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
@@ -80,16 +92,12 @@ export default function LoginDialog({
             onChange={(e) => setEmail(e.target.value)}
             fullWidth
             required
-            variant="outlined"
+            size="small"
             sx={{
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: '#1976d2',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#1976d2',
-                },
+                borderRadius: 1.5,
+                '& fieldset': { borderColor: '#e5e5e5' },
+                '&.Mui-focused fieldset': { borderColor: '#0a0a0a' },
               },
             }}
           />
@@ -100,45 +108,36 @@ export default function LoginDialog({
             onChange={(e) => setPassword(e.target.value)}
             fullWidth
             required
-            variant="outlined"
+            size="small"
             sx={{
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                '&:hover fieldset': {
-                  borderColor: '#1976d2',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#1976d2',
-                },
+                borderRadius: 1.5,
+                '& fieldset': { borderColor: '#e5e5e5' },
+                '&.Mui-focused fieldset': { borderColor: '#0a0a0a' },
               },
             }}
           />
         </Box>
       </DialogContent>
-      <DialogActions sx={{ flexDirection: 'column', px: 4, pb: 3, gap: 2 }}>
+      <DialogActions sx={{ flexDirection: 'column', px: 3, pb: 3, pt: 0, gap: 2 }}>
         <Button
           type="submit"
           variant="contained"
           fullWidth
-          size="large"
+          size="medium"
           disabled={loading}
           onClick={handleSubmit}
           sx={{
-            py: 1.5,
-            borderRadius: 3,
-            fontWeight: 600,
-            backgroundColor: '#1976d2',
-            '&:hover': {
-              backgroundColor: '#1565c0',
-              transform: 'translateY(-1px)',
-              boxShadow: '0 4px 12px rgba(25,118,210,0.3)',
-            },
-            transition: 'all 0.2s ease',
+            py: 1.25,
+            borderRadius: 1.5,
+            fontWeight: 500,
+            bgcolor: '#0a0a0a',
+            '&:hover': { bgcolor: '#262626' },
           }}
         >
-          {loading ? <CircularProgress size={20} color="inherit" /> : 'Sign In'}
+          {loading ? <CircularProgress size={20} color="inherit" /> : 'Sign in'}
         </Button>
-        <Typography align="center" sx={{ fontSize: '0.9rem' }}>
+        <Typography variant="body2" sx={{ color: '#737373' }}>
           Don&apos;t have an account?{' '}
           <Button
             onClick={onSwitchToRegister}
@@ -146,11 +145,9 @@ export default function LoginDialog({
               textTransform: 'none',
               p: 0,
               minWidth: 'auto',
-              color: '#1976d2',
+              color: '#0a0a0a',
               fontWeight: 500,
-              '&:hover': {
-                textDecoration: 'underline',
-              },
+              '&:hover': { bgcolor: 'transparent', textDecoration: 'underline' },
             }}
           >
             Sign up
