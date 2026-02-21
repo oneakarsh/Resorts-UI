@@ -17,12 +17,14 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import { Resort } from '@/types';
 import { useRouter } from 'next/navigation';
+import { formatRupee } from '@/lib/formatRupee';
 
 interface ResortCardProps {
   resort: Resort;
+  promoted?: boolean;
 }
 
-export default function ResortCard({ resort }: ResortCardProps) {
+export default function ResortCard({ resort, promoted }: ResortCardProps) {
   const router = useRouter();
   const [wishlisted, setWishlisted] = useState(false);
 
@@ -50,6 +52,28 @@ export default function ResortCard({ resort }: ResortCardProps) {
       }}
     >
       <Box sx={{ position: 'relative' }}>
+        {promoted && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              zIndex: 1,
+              px: 1,
+              py: 0.25,
+              borderRadius: 999,
+              bgcolor: 'rgba(255,255,255,0.9)',
+              border: '1px solid #e5e5e5',
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#737373' }}
+            >
+              Promoted
+            </Typography>
+          </Box>
+        )}
         <IconButton
           size="small"
           onClick={() => setWishlisted(!wishlisted)}
@@ -90,7 +114,7 @@ export default function ResortCard({ resort }: ResortCardProps) {
               {resort.name}
             </Typography>
             <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0a0a0a', whiteSpace: 'nowrap' }}>
-              ${resort.pricePerNight}
+              {formatRupee(resort.pricePerNight)}
               <Typography component="span" variant="caption" sx={{ color: '#737373', fontWeight: 400 }}>
                 /night
               </Typography>

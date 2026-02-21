@@ -114,8 +114,32 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   const pathname = usePathname() ?? '';
-  const showResortGrid =
-    pathname === '/' || pathname === '/resorts' || pathname.startsWith('/resorts/');
+  const isHome = pathname === '/';
+  const showResortGrid = isHome;
+
+  const featuredCount = 6;
+  const featuredResorts = resorts.slice(0, featuredCount);
+
+  const renderResortGrid = (list: Resort[], skeletonCount: number, promoted = false) =>
+    loading ? (
+      <Grid container spacing={2}>
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
+            <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+            <Skeleton variant="text" sx={{ mt: 1.5 }} />
+            <Skeleton variant="text" width="50%" />
+          </Grid>
+        ))}
+      </Grid>
+    ) : (
+      <Grid container spacing={2}>
+        {list.map((resort, index) => (
+          <Grid key={resort.id ?? resort._id ?? `resort-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
+            <ResortCard resort={resort} promoted={promoted} />
+          </Grid>
+        ))}
+      </Grid>
+    );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#fafafa' }}>
@@ -123,59 +147,13 @@ export default function Layout({ children }: LayoutProps) {
       <Box component="main" sx={{ flexGrow: 1 }}>
         {children}
         {showResortGrid && (
-          <Box sx={{ py: 5, px: 2, maxWidth: 1200, mx: 'auto' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                mb: 3,
-                gap: 1.5,
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 600,
-                  color: '#0a0a0a',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Featured resorts
-              </Typography>
-              <Typography
-                component="a"
-                href="/resorts"
-                sx={{
-                  fontSize: '0.875rem',
-                  color: '#737373',
-                  textDecoration: 'none',
-                  '&:hover': { color: '#0a0a0a' },
-                }}
-              >
-                View all resorts
-              </Typography>
+          <Box sx={{ py: 3, px: 2, maxWidth: 1200, mx: 'auto' }}>
+            {/* Promoted (featured) resorts on home */}
+            <Box sx={{ mb: 3 }}>
+              {renderResortGrid(featuredResorts, 6, true)}
             </Box>
-
-            {loading ? (
-              <Grid container spacing={2}>
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
-                    <Skeleton variant="text" sx={{ mt: 1.5 }} />
-                    <Skeleton variant="text" width="50%" />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Grid container spacing={2}>
-                {resorts.map((resort, index) => (
-                  <Grid key={resort.id ?? resort._id ?? `resort-${index}`} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <ResortCard resort={resort} />
-                  </Grid>
-                ))}
-              </Grid>
-            )}
+            {/* All resorts on home */}
+            {renderResortGrid(resorts, 6)}
           </Box>
         )}
       </Box>

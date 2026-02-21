@@ -11,6 +11,8 @@ import {
 import {
   FilterList as FilterListIcon,
   Tune as TuneOffIcon,
+  NotificationsNone as NotificationsIcon,
+  ChatBubbleOutline as ChatIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -155,14 +157,36 @@ export default function Navbar() {
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             {session ? (
-              <UserMenu
-                user={{ name: session.user?.name || '', role: (session.user as { role?: string })?.role || 'user' }}
-                anchorEl={anchorEl}
-                onMenuOpen={e => setAnchorEl(e.currentTarget)}
-                onMenuClose={() => setAnchorEl(null)}
-                onLogout={handleLogout}
-                onNavigate={router.push}
-              />
+              <>
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: '#737373',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', color: '#0a0a0a' },
+                  }}
+                  aria-label="Notifications"
+                >
+                  <NotificationsIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: '#737373',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', color: '#0a0a0a' },
+                  }}
+                  aria-label="Chat"
+                >
+                  <ChatIcon fontSize="small" />
+                </IconButton>
+                <UserMenu
+                  user={{ name: session.user?.name || '', role: (session.user as { role?: string })?.role || 'user' }}
+                  anchorEl={anchorEl}
+                  onMenuOpen={e => setAnchorEl(e.currentTarget)}
+                  onMenuClose={() => setAnchorEl(null)}
+                  onLogout={handleLogout}
+                  onNavigate={router.push}
+                />
+              </>
             ) : (
               <>
                 <Button

@@ -42,6 +42,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { resortAPI, bookingAPI, userAPI } from '@/lib/api';
+import { formatRupee } from '@/lib/formatRupee';
 import { Resort, Booking, User } from '@/types';
 
 interface TabPanelProps {
@@ -504,7 +505,7 @@ export default function AdminDashboard() {
                     >
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.name}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.location}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>${resort.pricePerNight}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>{formatRupee(resort.pricePerNight)}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.rooms}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5' }}>
                         <Button
@@ -570,7 +571,7 @@ export default function AdminDashboard() {
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkInDate).toLocaleDateString()}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkOutDate).toLocaleDateString()}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{booking.numberOfGuests}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>${booking.totalPrice}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>{formatRupee(booking.totalPrice)}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5' }}>
                         <Chip
                           label={booking.status}

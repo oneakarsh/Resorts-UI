@@ -22,6 +22,7 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
+import { formatRupee } from '@/lib/formatRupee';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -52,6 +53,8 @@ export default function BookingPage() {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [cardName, setCardName] = useState('');
+
+  const AMENITY_ADDON_RUPEES = 4000;
 
   const getNearbyAttractions = (location: string) => {
     switch (location.toLowerCase()) {
@@ -111,7 +114,7 @@ export default function BookingPage() {
     if (!resort) return 0;
     const nights = calculateNights();
     const basePrice = nights * resort.pricePerNight;
-    const amenityPrice = selectedAmenities.length * 50; // Assuming $50 per amenity
+    const amenityPrice = selectedAmenities.length * AMENITY_ADDON_RUPEES;
     return basePrice + amenityPrice;
   };
 
@@ -189,6 +192,8 @@ export default function BookingPage() {
     );
   }
 
+  const attractions = getNearbyAttractions(resort.location);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ py: 4, px: 2, maxWidth: 1100, mx: 'auto' }}>
@@ -200,71 +205,54 @@ export default function BookingPage() {
         </Typography>
 
         <Grid container spacing={3}>
-          {/* Resort Details */}
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none', borderRadius: 2, overflow: 'hidden' }}>
-              <CardMedia
-                component="img"
-                height="280"
-                image={resort.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
-                alt={resort.name}
-              />
-              <CardContent sx={{ p: 2.5 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
-                  {resort.name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#737373', mb: 1.5, lineHeight: 1.6 }}>
-                  {resort.description}
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#737373', mb: 1.5 }}>
-                  {resort.location}
-                </Typography>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 2 }}>
-                  ${resort.pricePerNight} per night
-                </Typography>
-
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
-                  Amenities
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                  {resort.amenities.map((amenity) => (
-                    <Chip
-                      key={amenity}
-                      label={amenity}
-                      size="small"
-                      variant={selectedAmenities.includes(amenity) ? 'filled' : 'outlined'}
-                      onClick={() => handleAmenityToggle(amenity)}
-                      sx={{
-                        cursor: 'pointer',
-                        borderColor: '#e5e5e5',
-                        bgcolor: selectedAmenities.includes(amenity) ? '#0a0a0a' : 'transparent',
-                        color: selectedAmenities.includes(amenity) ? '#fff' : '#737373',
-                        fontWeight: 500,
-                        '&:hover': { borderColor: '#0a0a0a' },
-                      }}
-                    />
-                  ))}
-                </Box>
-
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
-                    Nearby attractions
+            {/* Resort Details */}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none', borderRadius: 2, overflow: 'hidden' }}>
+                <CardMedia
+                  component="img"
+                  height="280"
+                  image={resort.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
+                  alt={resort.name}
+                />
+                <CardContent sx={{ p: 2.5 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
+                    {resort.name}
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    {getNearbyAttractions(resort.location).map((attraction) => (
-                      <Typography
-                        key={attraction.name}
-                        variant="body2"
-                        sx={{ color: '#737373' }}
-                      >
-                        {attraction.name} · {attraction.type} · {attraction.distance}
-                      </Typography>
+                  <Typography variant="body2" sx={{ color: '#737373', mb: 1.5, lineHeight: 1.6 }}>
+                    {resort.description}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#737373', mb: 1.5 }}>
+                    {resort.location}
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 2 }}>
+                    {formatRupee(resort.pricePerNight)} per night
+                  </Typography>
+
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
+                    Amenities
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    {resort.amenities.map((amenity) => (
+                      <Chip
+                        key={amenity}
+                        label={amenity}
+                        size="small"
+                        variant={selectedAmenities.includes(amenity) ? 'filled' : 'outlined'}
+                        onClick={() => handleAmenityToggle(amenity)}
+                        sx={{
+                          cursor: 'pointer',
+                          borderColor: '#e5e5e5',
+                          bgcolor: selectedAmenities.includes(amenity) ? '#0a0a0a' : 'transparent',
+                          color: selectedAmenities.includes(amenity) ? '#fff' : '#737373',
+                          fontWeight: 500,
+                          '&:hover': { borderColor: '#0a0a0a' },
+                        }}
+                      />
                     ))}
                   </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
 
           {/* Booking Form */}
           <Grid size={{ xs: 12, md: 4 }}>
@@ -321,13 +309,13 @@ export default function BookingPage() {
 
                 <Box>
                   <Typography variant="body2">
-                    {calculateNights()} nights × ${resort.pricePerNight} = ${calculateNights() * resort.pricePerNight}
+                    {calculateNights()} nights × {formatRupee(resort.pricePerNight)} = {formatRupee(calculateNights() * resort.pricePerNight)}
                   </Typography>
                   <Typography variant="body2">
-                    Amenities: {selectedAmenities.length} × $50 = ${selectedAmenities.length * 50}
+                    Amenities: {selectedAmenities.length} × {formatRupee(AMENITY_ADDON_RUPEES)} = {formatRupee(selectedAmenities.length * AMENITY_ADDON_RUPEES)}
                   </Typography>
                   <Typography variant="h6" sx={{ mt: 1 }}>
-                    Total: ${calculateTotalPrice()}
+                    Total: {formatRupee(calculateTotalPrice())}
                   </Typography>
                 </Box>
 
@@ -412,6 +400,65 @@ export default function BookingPage() {
             </Paper>
           </Grid>
         </Grid>
+
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1.5 }}>
+            Nearby attractions
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#737373', mb: 2, display: 'block' }}>
+            Swipe or scroll to explore
+          </Typography>
+          <Box
+            className="attractions-swipe"
+            sx={{
+              display: 'flex',
+              gap: 2,
+              overflowX: 'auto',
+              pb: 2,
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              '& > *': { scrollSnapAlign: 'start', flexShrink: 0 },
+              scrollbarWidth: 'thin',
+            }}
+          >
+            {attractions.map((attraction) => (
+              <Card
+                key={attraction.name}
+                variant="outlined"
+                sx={{
+                  minWidth: 280,
+                  maxWidth: 320,
+                  borderRadius: 2,
+                  borderColor: '#e5e5e5',
+                  boxShadow: 'none',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                  '&:hover': { borderColor: '#d4d4d4', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' },
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
+                    {attraction.name}
+                  </Typography>
+                  <Chip
+                    label={attraction.type}
+                    size="small"
+                    sx={{
+                      fontSize: '0.75rem',
+                      height: 22,
+                      mb: 1,
+                      bgcolor: 'rgba(0,0,0,0.06)',
+                      color: '#0a0a0a',
+                      border: 'none',
+                    }}
+                  />
+                  <Typography variant="body2" sx={{ color: '#737373' }}>
+                    {attraction.distance} away
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </Box>
       </Box>
     </LocalizationProvider>
   );

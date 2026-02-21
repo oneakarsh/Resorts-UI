@@ -120,7 +120,7 @@ export default function AdvancedFilters({
           <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 10px)', md: '1 1 calc(25% - 12px)' }, minWidth: 160 }}>
             <Typography variant="caption" sx={{ color: '#737373', fontWeight: 500, display: 'block', mb: 0.5 }}>
               <MoneyIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
-              ${filters.priceRange[0]} – ${filters.priceRange[1]}
+              ₹{filters.priceRange[0].toLocaleString('en-IN')} – ₹{filters.priceRange[1].toLocaleString('en-IN')}
             </Typography>
             <Slider
               value={filters.priceRange}

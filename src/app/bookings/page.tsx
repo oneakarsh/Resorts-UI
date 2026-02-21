@@ -13,6 +13,7 @@ import {
   Chip,
   Box,
 } from '@mui/material';
+import { formatRupee } from '@/lib/formatRupee';
 
 const mockBookings = [
   {
@@ -63,7 +64,7 @@ export default function BookingsPage() {
                 <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(b.checkIn).toLocaleDateString()}</TableCell>
                 <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(b.checkOut).toLocaleDateString()}</TableCell>
                 <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{b.guests}</TableCell>
-                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem', fontWeight: 500 }}>${b.total}</TableCell>
+                <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem', fontWeight: 500 }}>{formatRupee(b.total)}</TableCell>
                 <TableCell sx={{ borderColor: '#e5e5e5' }}>
                   <Chip
                     label={b.status}
