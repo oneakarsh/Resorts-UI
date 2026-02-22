@@ -3,7 +3,7 @@ export default function Page() {
     <main>
       <section
         style={{
-          padding: 'clamp(2.5rem, 6vw, 4rem) 1.5rem 1.5rem',
+          padding: 'clamp(1.5rem, 4vw, 2.5rem) 1.5rem 1.5rem',
           textAlign: 'center',
           maxWidth: 640,
           margin: '0 auto',

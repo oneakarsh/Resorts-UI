@@ -6,7 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions as any);
+  const session = (await getServerSession(authOptions as any)) as any;
   if (!session?.user?.role || (session.user.role !== 'admin' && session.user.role !== 'superadmin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }

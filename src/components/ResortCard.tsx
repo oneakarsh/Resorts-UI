@@ -96,8 +96,7 @@ export default function ResortCard({ resort, promoted }: ResortCardProps) {
         <CardMedia
           sx={{ height: 180 }}
           image={
-            resort.images?.[0] ??
-            `https://via.placeholder.com/400x300?text=${encodeURIComponent(resort.name)}`
+            (((resort as any).images?.[0]) ?? resort.image) ?? `https://via.placeholder.com/400x300?text=${encodeURIComponent(resort.name)}`
           }
         />
       </Box>

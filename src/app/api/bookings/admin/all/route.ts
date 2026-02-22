@@ -4,24 +4,22 @@ import { checkRole } from '@/lib/apiAuth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export async function POST(req: NextRequest) {
-  const { authorized, session, response } = await checkRole('superadmin');
+export async function GET(req: NextRequest) {
+  const { authorized, session, response } = await checkRole(['admin', 'superadmin']);
 
   if (!authorized) {
     return response;
   }
 
-  const body = await req.json();
-
   try {
-    const res = await axios.post(`${API_BASE_URL}/users`, body, {
+    const res = await axios.get(`${API_BASE_URL}/bookings/admin/all`, {
       headers: { Authorization: `Bearer ${(session as any).accessToken}` },
     });
     return NextResponse.json(res.data, { status: res.status });
   } catch (error: any) {
-    console.error('Create user error:', error?.response?.data || error.message || error);
+    console.error('Get admin bookings error:', error?.response?.data || error.message || error);
     return NextResponse.json(
-      { error: 'Failed to create user', details: error?.response?.data?.message },
+      { error: 'Failed to fetch all bookings', details: error?.response?.data?.message },
       { status: error?.response?.status || 500 }
     );
   }

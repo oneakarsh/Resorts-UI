@@ -37,7 +37,7 @@ export default function Layout({ children }: LayoutProps) {
             amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant'],
             maxGuests: 4,
             rooms: 2,
-            images: ['https://via.placeholder.com/400x300?text=Paradise+Resort']
+            image: 'https://via.placeholder.com/400x300?text=Paradise+Resort'
           },
           {
             id: '2',
@@ -50,7 +50,7 @@ export default function Layout({ children }: LayoutProps) {
             amenities: ['Fireplace', 'Hiking', 'Restaurant', 'Bar'],
             maxGuests: 6,
             rooms: 3,
-            images: ['https://via.placeholder.com/400x300?text=Mountain+View+Lodge']
+            image: 'https://via.placeholder.com/400x300?text=Mountain+View+Lodge'
           },
           {
             id: '3',
@@ -63,7 +63,7 @@ export default function Layout({ children }: LayoutProps) {
             amenities: ['Pool', 'Gym', 'Restaurant', 'Bar', 'WiFi'],
             maxGuests: 2,
             rooms: 1,
-            images: ['https://via.placeholder.com/400x300?text=Urban+Luxury+Hotel']
+            image: 'https://via.placeholder.com/400x300?text=Urban+Luxury+Hotel'
           },
           {
             id: '4',
@@ -76,7 +76,7 @@ export default function Layout({ children }: LayoutProps) {
             amenities: ['Beach', 'Water Sports', 'Spa', 'Restaurant'],
             maxGuests: 8,
             rooms: 4,
-            images: ['https://via.placeholder.com/400x300?text=Tropical+Paradise']
+            image: 'https://via.placeholder.com/400x300?text=Tropical+Paradise'
           },
           {
             id: '5',
@@ -89,7 +89,7 @@ export default function Layout({ children }: LayoutProps) {
             amenities: ['Camel Rides', 'Pool', 'Restaurant', 'Spa'],
             maxGuests: 4,
             rooms: 2,
-            images: ['https://via.placeholder.com/400x300?text=Desert+Oasis']
+            image: 'https://via.placeholder.com/400x300?text=Desert+Oasis'
           },
           {
             id: '6',
@@ -102,7 +102,7 @@ export default function Layout({ children }: LayoutProps) {
             amenities: ['Hot Springs', 'Hiking', 'Fireplace', 'Restaurant'],
             maxGuests: 4,
             rooms: 2,
-            images: ['https://via.placeholder.com/400x300?text=Forest+Retreat']
+            image: 'https://via.placeholder.com/400x300?text=Forest+Retreat'
           }
         ]);
       } finally {

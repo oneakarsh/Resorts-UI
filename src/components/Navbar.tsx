@@ -7,6 +7,8 @@ import {
   Button,
   Box,
   IconButton,
+  Dialog,
+  Typography,
 } from '@mui/material';
 import {
   FilterList as FilterListIcon,
@@ -46,6 +48,8 @@ export default function Navbar() {
 
   const [openLoginDialog, setOpenLoginDialog] = useState(false);
   const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
+  const [openNotifications, setOpenNotifications] = useState(false);
+  const [openChat, setOpenChat] = useState(false);
 
   const router = useRouter();
 
@@ -160,6 +164,7 @@ export default function Navbar() {
               <>
                 <IconButton
                   size="small"
+                  onClick={() => setOpenNotifications(true)}
                   sx={{
                     color: '#737373',
                     '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', color: '#0a0a0a' },
@@ -170,6 +175,7 @@ export default function Navbar() {
                 </IconButton>
                 <IconButton
                   size="small"
+                  onClick={() => setOpenChat(true)}
                   sx={{
                     color: '#737373',
                     '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', color: '#0a0a0a' },
@@ -235,6 +241,31 @@ export default function Navbar() {
         onSuccess={handleRegisterSuccess}
         onSwitchToLogin={handleSwitchToLogin}
       />
+      {/* Notifications dialog */}
+      <div>
+        <Dialog open={openNotifications} onClose={() => setOpenNotifications(false)}>
+          <Box sx={{ p: 2, minWidth: 320 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Notifications</Typography>
+            <Typography variant="body2" sx={{ color: '#737373' }}>You have no new notifications.</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button onClick={() => setOpenNotifications(false)}>Close</Button>
+            </Box>
+          </Box>
+        </Dialog>
+      </div>
+
+      {/* Chat dialog */}
+      <div>
+        <Dialog open={openChat} onClose={() => setOpenChat(false)}>
+          <Box sx={{ p: 2, minWidth: 320 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Messages</Typography>
+            <Typography variant="body2" sx={{ color: '#737373' }}>This is a demo chat popup.</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button onClick={() => setOpenChat(false)}>Close</Button>
+            </Box>
+          </Box>
+        </Dialog>
+      </div>
     </>
   );
 }

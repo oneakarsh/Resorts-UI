@@ -125,8 +125,13 @@ export default function AdminDashboard() {
       return;
     }
 
-    // setCurrentUser(session.user as User);
-    setCurrentUser(session.user as User);
+    // Set current user from session
+    const userData = {
+      ...(session.user as User),
+      role: userRole,
+    };
+    console.log('Current user:', userData); // Debug log
+    setCurrentUser(userData as User);
     fetchData();
   }, [router, session, status]);
 
@@ -258,7 +263,7 @@ export default function AdminDashboard() {
       setUserForm({
         name: user.name,
         email: user.email,
-        phone: user.phone,
+        phone: user.phone ?? '',
         role: user.role as 'admin' | 'superadmin',
         password: '', // Don't populate password for editing
       });
@@ -288,7 +293,7 @@ export default function AdminDashboard() {
       };
 
       if (editingUser) {
-        await userAPI.update(editingUser.id, userData, session?.accessToken);
+        await userAPI.update(editingUser.id!, userData, session?.accessToken);
       } else {
         await userAPI.create(userData, session?.accessToken);
       }
@@ -400,7 +405,7 @@ export default function AdminDashboard() {
           <Tab icon={<DashboardIcon />} label="Overview" />
           <Tab icon={<HotelIcon />} label="Manage Resorts" />
           <Tab icon={<BookingIcon />} label="Manage Bookings" />
-          {currentUser?.role === 'superadmin' && (
+          {currentUser && currentUser.role === 'superadmin' && (
             <Tab icon={<PeopleIcon />} label="Manage Users" />
           )}
         </Tabs>
@@ -566,7 +571,7 @@ export default function AdminDashboard() {
                 <TableBody>
                   {bookings.map((booking) => (
                     <TableRow key={booking.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{booking.id.slice(-8)}</TableCell>
+                      <TableCell sx={{ borderColor: '#e5e5e5', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{(booking.id ?? booking._id ?? '').slice(-8)}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{booking.resort?.name || '—'}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkInDate).toLocaleDateString()}</TableCell>
                       <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkOutDate).toLocaleDateString()}</TableCell>
@@ -584,10 +589,10 @@ export default function AdminDashboard() {
                       <TableCell sx={{ borderColor: '#e5e5e5' }}>
                         {booking.status === 'pending' && (
                           <Box>
-                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')} sx={{ mr: 0.5, color: '#16a34a', fontWeight: 500 }}>
+                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id ?? booking._id ?? '', 'confirmed')} sx={{ mr: 0.5, color: '#16a34a', fontWeight: 500 }}>
                               Confirm
                             </Button>
-                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')} sx={{ color: '#dc2626', fontWeight: 500 }}>
+                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id ?? booking._id ?? '', 'cancelled')} sx={{ color: '#dc2626', fontWeight: 500 }}>
                               Cancel
                             </Button>
                           </Box>
@@ -673,7 +678,7 @@ export default function AdminDashboard() {
                             <Button
                               size="small"
                               startIcon={<DeleteIcon />}
-                              onClick={() => handleDeleteUser(user.id)}
+                              onClick={() => handleDeleteUser(user.id ?? user._id ?? '')} 
                               sx={{ color: '#dc2626', fontWeight: 500, '&:hover': { bgcolor: 'rgba(220,38,38,0.08)' } }}
                             >
                               Delete

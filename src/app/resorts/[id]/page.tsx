@@ -21,7 +21,14 @@ import {
   CircularProgress,
   Divider,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Snackbar,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { formatRupee } from '@/lib/formatRupee';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -34,7 +41,7 @@ export default function BookingPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
-  const id = params.id as string;
+  const id = params?.id as string;
 
   const [resort, setResort] = useState<Resort | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +53,9 @@ export default function BookingPage() {
   const [numberOfGuests, setNumberOfGuests] = useState(1);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [amenityDialogOpen, setAmenityDialogOpen] = useState(false);
+  const [selectedAmenity, setSelectedAmenity] = useState<string | null>(null);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   // Payment state
   const [showPayment, setShowPayment] = useState(false);
@@ -54,33 +64,109 @@ export default function BookingPage() {
   const [cvv, setCvv] = useState('');
   const [cardName, setCardName] = useState('');
 
+  // Nearby attractions state
+  const [attractionDialogOpen, setAttractionDialogOpen] = useState(false);
+  const [selectedAttraction, setSelectedAttraction] = useState<any>(null);
+
   const AMENITY_ADDON_RUPEES = 4000;
 
   const getNearbyAttractions = (location: string) => {
     switch (location.toLowerCase()) {
       case 'maldives':
         return [
-          { name: 'Coral Garden Reef', distance: '1.8 km', type: 'Snorkeling' },
-          { name: 'Lagoon Sandbank', distance: '3.2 km', type: 'Beach' },
-          { name: 'Sunset Pier', distance: '0.9 km', type: 'Viewpoint' },
+          { 
+            name: 'Coral Garden Reef', 
+            distance: '1.8 km', 
+            type: 'Snorkeling',
+            image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=600&h=400&fit=crop',
+            description: 'Pristine coral gardens with vibrant marine life. Perfect for snorkeling enthusiasts of all levels. Crystal clear waters and abundant tropical fish species.' 
+          },
+          { 
+            name: 'Lagoon Sandbank', 
+            distance: '3.2 km', 
+            type: 'Beach',
+            image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=400&fit=crop',
+            description: 'Exclusive sandbank with pristine white sand. Ideal for swimming, sunbathing, and enjoying water sports. Breathtaking views and shallow turquoise waters.' 
+          },
+          { 
+            name: 'Sunset Pier', 
+            distance: '0.9 km', 
+            type: 'Viewpoint',
+            image: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=600&h=400&fit=crop',
+            description: 'Stunning viewpoint for sunset watching. The pier offers panoramic ocean views and is perfect for photography. Romantic spot for evening strolls.' 
+          },
         ];
       case 'hawaii':
         return [
-          { name: 'Hidden Bay Lookout', distance: '2.4 km', type: 'Viewpoint' },
-          { name: 'Tropical Falls Trail', distance: '4.1 km', type: 'Hiking' },
-          { name: 'Local Farmers Market', distance: '1.2 km', type: 'Market' },
+          { 
+            name: 'Hidden Bay Lookout', 
+            distance: '2.4 km', 
+            type: 'Viewpoint',
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+            description: 'Scenic mountain viewpoint overlooking Hidden Bay. Experience breathtaking vistas of the Pacific Ocean and coastal landscapes. Best visited at sunrise or sunset.' 
+          },
+          { 
+            name: 'Tropical Falls Trail', 
+            distance: '4.1 km', 
+            type: 'Hiking',
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+            description: 'Beautiful hiking trail leading to refreshing waterfalls. Immerse yourself in lush tropical vegetation and enjoy nature walks. Perfect for adventure seekers.' 
+          },
+          { 
+            name: 'Local Farmers Market', 
+            distance: '1.2 km', 
+            type: 'Market',
+            image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop',
+            description: 'Authentic farmers market with fresh local produce and crafts. Experience Hawaiian culture through local goods and traditional treats. Great place to sample fresh fruits.' 
+          },
         ];
       case 'dubai':
         return [
-          { name: 'Desert Dune Point', distance: '5.0 km', type: 'Desert tour' },
-          { name: 'Old Souk District', distance: '7.3 km', type: 'Market' },
-          { name: 'City Skyline Deck', distance: '3.6 km', type: 'Viewpoint' },
+          { 
+            name: 'Desert Dune Point', 
+            distance: '5.0 km', 
+            type: 'Desert tour',
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop',
+            description: 'Exciting desert safari experience with sand dunes and stunning landscapes. Enjoy camel rides, desert photography, and traditional Bedouin culture. Best in the morning or evening.' 
+          },
+          { 
+            name: 'Old Souk District', 
+            distance: '7.3 km', 
+            type: 'Market',
+            image: 'https://images.unsplash.com/photo-1488312508862-ae00ad38eb33?w=600&h=400&fit=crop',
+            description: 'Historic market district with traditional shops and spice bazaars. Explore authentic Arabian markets, handicrafts, and textiles. Experience local culture and cuisine.' 
+          },
+          { 
+            name: 'City Skyline Deck', 
+            distance: '3.6 km', 
+            type: 'Viewpoint',
+            image: 'https://images.unsplash.com/photo-1512428768552-0acafc63d7cc?w=600&h=400&fit=crop',
+            description: 'Premium observation deck with panoramic city views. Enjoy spectacular views of Dubai\'s iconic skyscrapers and coastal landscape. Perfect for photography.' 
+          },
         ];
       default:
         return [
-          { name: 'Old Town Square', distance: '1.4 km', type: 'Historic' },
-          { name: 'Riverside Promenade', distance: '2.1 km', type: 'Walk' },
-          { name: 'Local Art Museum', distance: '2.9 km', type: 'Culture' },
+          { 
+            name: 'Old Town Square', 
+            distance: '1.4 km', 
+            type: 'Historic', 
+            image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&h=400&fit=crop', 
+            description: 'Historic square with charming cafes and street performers. Experience local culture and enjoy traditional architecture. Great for leisurely walks and people watching.' 
+          },
+          { 
+            name: 'Riverside Promenade', 
+            distance: '2.1 km', 
+            type: 'Walk', 
+            image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop', 
+            description: 'Pleasant riverside walk with scenic views. Stroll along the waterfront with lush greenery and peaceful ambiance. Perfect for evening walks and relaxation.' 
+          },
+          { 
+            name: 'Local Art Museum', 
+            distance: '2.9 km', 
+            type: 'Culture', 
+            image: 'https://images.unsplash.com/photo-1478359866651-e92287b911d8?w=600&h=400&fit=crop', 
+            description: 'Local art exhibits and contemporary galleries. Explore regional artworks and cultural exhibitions. A must-visit for art enthusiasts and cultural explorers.' 
+          },
         ];
     }
   };
@@ -132,47 +218,115 @@ export default function BookingPage() {
       return;
     }
     setError(null);
-    setShowPayment(true);
+    // Redirect to dummy payment page with booking data encoded
+    const bookingData = {
+      resortId: resort?.id ?? resort?._id,
+      resortName: resort?.name,
+      checkInDate: checkInDate?.format('YYYY-MM-DD'),
+      checkOutDate: checkOutDate?.format('YYYY-MM-DD'),
+      numberOfGuests,
+      selectedAmenities,
+      totalPrice: calculateTotalPrice(),
+    };
+    const qs = encodeURIComponent(JSON.stringify(bookingData));
+    window.location.href = `/dummy-payment?data=${qs}`;
   };
+  // Booking is handled on /dummy-payment after payment is simulated
 
-  const handleBookingSubmit = async () => {
-    if (!resort || !checkInDate || !checkOutDate) return;
-
-    if (status !== 'authenticated' || !session) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      setBookingLoading(true);
-      const bookingData = {
-        resortId: resort.id,
-        checkInDate: checkInDate.format('YYYY-MM-DD'),
-        checkOutDate: checkOutDate.format('YYYY-MM-DD'),
-        numberOfGuests,
-        selectedAmenities,
-        totalPrice: calculateTotalPrice(),
-      };
-
-      // Pass the access token to the API call
-      const response = await bookingAPI.create(bookingData, session.accessToken);
-      const booking = response.data?.data || response.data;
-
-      // Redirect to success page or bookings
-      router.push('/bookings');
-    } catch (err: unknown) {
-      console.error('Booking failed:', err);
-      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Booking failed');
-    } finally {
-      setBookingLoading(false);
-    }
+  const amenityDetails: Record<string, { image: string; description: string }> = {
+    WiFi: { image: 'https://via.placeholder.com/400x240?text=WiFi', description: 'High-speed wireless internet available throughout the property.' },
+    Pool: { image: 'https://via.placeholder.com/400x240?text=Pool', description: 'Outdoor swimming pool with loungers and poolside service.' },
+    Spa: { image: 'https://via.placeholder.com/400x240?text=Spa', description: 'Full-service spa offering massages and wellness treatments.' },
+    Restaurant: { image: 'https://via.placeholder.com/400x240?text=Restaurant', description: 'On-site restaurant serving local and international cuisine.' },
+    Bar: { image: 'https://via.placeholder.com/400x240?text=Bar', description: 'Bar with a wide selection of cocktails and beverages.' },
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-        <CircularProgress sx={{ color: '#0a0a0a' }} />
-      </Box>
+      <>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress sx={{ color: '#0a0a0a' }} />
+        </Box>
+
+        {/* Amenity detail dialog */}
+        <Dialog open={amenityDialogOpen} onClose={() => setAmenityDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>{selectedAmenity}</DialogTitle>
+          <DialogContent>
+            {selectedAmenity && (
+              <Box>
+                <CardMedia component="img" height="220" image={(amenityDetails[selectedAmenity]?.image) ?? `https://via.placeholder.com/600x320?text=${encodeURIComponent(selectedAmenity)}`} />
+                <Typography variant="body2" sx={{ mt: 1 }}>{(amenityDetails[selectedAmenity]?.description) ?? 'Enjoy this amenity during your stay.'}</Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setAmenityDialogOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Nearby Attraction Detail Dialog */}
+        <Dialog 
+          open={attractionDialogOpen} 
+          onClose={() => setAttractionDialogOpen(false)} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 2 } }}
+        >
+          <DialogTitle sx={{ fontWeight: 600, fontSize: '1.125rem', color: '#0a0a0a', position: 'relative', pb: 1 }}>
+            {selectedAttraction?.name}
+            <IconButton
+              onClick={() => setAttractionDialogOpen(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+              size="small"
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 0 }}>
+            {selectedAttraction && (
+              <Box>
+                <CardMedia 
+                  component="img" 
+                  height="240" 
+                  image={selectedAttraction.image || `https://via.placeholder.com/600x300?text=${encodeURIComponent(selectedAttraction.name)}`}
+                  alt={selectedAttraction.name}
+                  sx={{ borderRadius: 2, my: 2, objectFit: 'cover' }}
+                />
+                <Box sx={{ mb: 2 }}>
+                  <Chip
+                    label={selectedAttraction.type}
+                    size="small"
+                    sx={{
+                      fontWeight: 500,
+                      fontSize: '0.8rem',
+                      bgcolor: 'rgba(0,0,0,0.06)',
+                      color: '#0a0a0a',
+                      mb: 1,
+                    }}
+                  />
+                </Box>
+                <Typography variant="body2" sx={{ color: '#737373', lineHeight: 1.7, mb: 1.5 }}>
+                  {selectedAttraction.description}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', color: '#737373' }}>
+                  <Typography variant="caption" sx={{ fontWeight: 500 }}>📍 {selectedAttraction.distance}</Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button 
+              onClick={() => setAttractionDialogOpen(false)}
+              variant="contained"
+              sx={{ bgcolor: '#0a0a0a', color: '#fff', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar open={notificationOpen} message="Action completed" autoHideDuration={2000} onClose={() => setNotificationOpen(false)} />
+      </>
     );
   }
 
@@ -211,7 +365,7 @@ export default function BookingPage() {
                 <CardMedia
                   component="img"
                   height="280"
-                  image={resort.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
+                  image={(((resort as any).images?.[0]) ?? resort.image) || 'https://via.placeholder.com/400x300?text=No+Image'}
                   alt={resort.name}
                 />
                 <CardContent sx={{ p: 2.5 }}>
@@ -231,24 +385,19 @@ export default function BookingPage() {
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
                     Amenities
                   </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                    {resort.amenities.map((amenity) => (
-                      <Chip
-                        key={amenity}
-                        label={amenity}
-                        size="small"
-                        variant={selectedAmenities.includes(amenity) ? 'filled' : 'outlined'}
-                        onClick={() => handleAmenityToggle(amenity)}
-                        sx={{
-                          cursor: 'pointer',
-                          borderColor: '#e5e5e5',
-                          bgcolor: selectedAmenities.includes(amenity) ? '#0a0a0a' : 'transparent',
-                          color: selectedAmenities.includes(amenity) ? '#fff' : '#737373',
-                          fontWeight: 500,
-                          '&:hover': { borderColor: '#0a0a0a' },
-                        }}
-                      />
-                    ))}
+                  <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+                    {resort.amenities.map((amenity) => {
+                      const meta = amenityDetails[amenity] ?? { image: `https://via.placeholder.com/400x240?text=${encodeURIComponent(amenity)}`, description: 'Experience this amenity during your stay.' };
+                      return (
+                        <Card key={amenity} variant="outlined" sx={{ minWidth: 220, borderRadius: 1.5, cursor: 'pointer' }} onClick={() => { setSelectedAmenity(amenity); setAmenityDialogOpen(true); }}>
+                          <CardMedia component="img" height="120" image={meta.image} />
+                          <CardContent>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{amenity}</Typography>
+                            <Typography variant="caption" sx={{ color: '#737373' }}>{meta.description.slice(0, 60)}...</Typography>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </Box>
                 </CardContent>
               </Card>
@@ -319,83 +468,20 @@ export default function BookingPage() {
                   </Typography>
                 </Box>
 
-                {!showPayment ? (
-                  <Button
-                    variant="contained"
-                    size="medium"
-                    onClick={handleProceedToPayment}
-                    fullWidth
-                    sx={{
-                      py: 1.25,
-                      fontWeight: 500,
-                      bgcolor: '#0a0a0a',
-                      '&:hover': { bgcolor: '#262626' },
-                    }}
-                  >
-                    Proceed to payment
-                  </Button>
-                ) : (
-                  <>
-                    <Divider sx={{ my: 2, borderColor: '#e5e5e5' }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1.5 }}>
-                      Payment
-                    </Typography>
-
-                    <TextField
-                      label="Card number"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      fullWidth
-                      size="small"
-                      placeholder="1234 5678 9012 3456"
-                      sx={{ mb: 1.5, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
-                    />
-
-                    <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
-                      <TextField
-                        label="Expiry"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                        placeholder="MM/YY"
-                        size="small"
-                        sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
-                      />
-                      <TextField
-                        label="CVV"
-                        value={cvv}
-                        onChange={(e) => setCvv(e.target.value)}
-                        placeholder="123"
-                        size="small"
-                        sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
-                      />
-                    </Box>
-
-                    <TextField
-                      label="Name on card"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      fullWidth
-                      size="small"
-                      sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiOutlinedInput-root fieldset': { borderColor: '#e5e5e5' } }}
-                    />
-
-                    <Button
-                      variant="contained"
-                      size="medium"
-                      onClick={handleBookingSubmit}
-                      disabled={bookingLoading}
-                      fullWidth
-                      sx={{
-                        py: 1.25,
-                        fontWeight: 500,
-                        bgcolor: '#0a0a0a',
-                        '&:hover': { bgcolor: '#262626' },
-                      }}
-                    >
-                      {bookingLoading ? <CircularProgress size={20} color="inherit" /> : 'Complete booking'}
-                    </Button>
-                  </>
-                )}
+                <Button
+                  variant="contained"
+                  size="medium"
+                  onClick={handleProceedToPayment}
+                  fullWidth
+                  sx={{
+                    py: 1.25,
+                    fontWeight: 500,
+                    bgcolor: '#0a0a0a',
+                    '&:hover': { bgcolor: '#262626' },
+                  }}
+                >
+                  Proceed to payment
+                </Button>
               </Box>
             </Paper>
           </Grid>
@@ -425,16 +511,35 @@ export default function BookingPage() {
               <Card
                 key={attraction.name}
                 variant="outlined"
+                onClick={() => {
+                  setSelectedAttraction(attraction);
+                  setAttractionDialogOpen(true);
+                }}
                 sx={{
                   minWidth: 280,
                   maxWidth: 320,
                   borderRadius: 2,
                   borderColor: '#e5e5e5',
                   boxShadow: 'none',
-                  transition: 'border-color 0.2s, box-shadow 0.2s',
-                  '&:hover': { borderColor: '#d4d4d4', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' },
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { 
+                    borderColor: '#d4d4d4', 
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    transform: 'translateY(-2px)',
+                  },
                 }}
               >
+                {attraction.image && (
+                  <CardMedia
+                    component="img"
+                    height="160"
+                    image={attraction.image}
+                    alt={attraction.name}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                )}
                 <CardContent sx={{ p: 2.5 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
                     {attraction.name}

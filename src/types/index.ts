@@ -1,9 +1,15 @@
 export interface User {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   role: 'user' | 'admin' | 'superadmin';
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  permissions?: string[];
 }
 
 export interface Resort {
@@ -18,11 +24,16 @@ export interface Resort {
   amenities: string[];
   maxGuests: number;
   rooms: number;
-  images?: string[];
+  rating?: number;
+  image?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Booking {
-  id: string;
+  id?: string;
+  _id?: string;
   userId: string;
   resortId: string;
   resort?: Resort;
@@ -30,8 +41,11 @@ export interface Booking {
   checkOutDate: string;
   numberOfGuests: number;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  createdAt: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  specialRequests?: string;
+  paymentMethod?: 'credit_card' | 'debit_card' | 'paypal';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
