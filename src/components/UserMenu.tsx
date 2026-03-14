@@ -82,6 +82,11 @@ export default function UserMenu({
             Admin
           </MenuItem>
         )}
+        {user.role === 'superadmin' && (
+          <MenuItem onClick={() => { onMenuClose(); onNavigate('/roles'); }}>
+            Roles & Permissions
+          </MenuItem>
+        )}
         <Divider sx={{ my: 1, borderColor: '#e5e5e5' }} />
         <MenuItem
           onClick={onLogout}

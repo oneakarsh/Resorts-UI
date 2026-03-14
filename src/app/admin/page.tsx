@@ -130,7 +130,6 @@ export default function AdminDashboard() {
       ...(session.user as User),
       role: userRole,
     };
-    console.log('Current user:', userData); // Debug log
     setCurrentUser(userData as User);
     fetchData();
   }, [router, session, status]);
