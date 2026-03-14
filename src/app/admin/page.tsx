@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Grid,
   Card,
@@ -19,30 +18,18 @@ import {
   Paper,
   Button,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   Hotel as HotelIcon,
   BookOnline as BookingIcon,
   People as PeopleIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  PersonAdd as PersonAddIcon,
   AdminPanelSettings as AdminIcon,
   Security as SecurityIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { resortAPI, bookingAPI, userAPI } from '@/lib/api';
-import { formatRupee } from '@/lib/formatRupee';
+import { resortAPI, bookingAPI, userAPI, superAdminAPI } from '@/lib/api';
 import { Resort, Booking, User } from '@/types';
 
 interface TabPanelProps {
@@ -81,34 +68,61 @@ export default function AdminDashboard() {
     confirmedBookings: 0,
   });
 
-  // Resort management state
-  const [resortDialog, setResortDialog] = useState(false);
-  const [editingResort, setEditingResort] = useState<Resort | null>(null);
-  const [resortForm, setResortForm] = useState({
-    name: '',
-    description: '',
-    location: '',
-    latitude: 0,
-    longitude: 0,
-    pricePerNight: 0,
-    amenities: '',
-    maxGuests: 1,
-    rooms: 1,
-  });
-
-  // User management state
-  const [userDialog, setUserDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [userForm, setUserForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'admin' as 'admin' | 'superadmin',
-    password: '',
-  });
-
   const router = useRouter();
   const { data: session, status } = useSession();
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const isSuperAdmin = currentUser?.role === 'SuperAdmin';
+      
+      let statsData;
+      let bookingsData;
+      let resortsData;
+      let usersData = [];
+
+      if (isSuperAdmin) {
+        const [statsRes, resortsRes, usersRes] = await Promise.all([
+          superAdminAPI.getStats(session?.accessToken),
+          superAdminAPI.getAllResorts ? superAdminAPI.getAllResorts(session?.accessToken) : resortAPI.getAll(session?.accessToken),
+          superAdminAPI.getAllUsers(session?.accessToken)
+        ]);
+        
+        statsData = statsRes.data?.data?.stats || statsRes.data?.stats;
+        resortsData = resortsRes.data?.data || resortsRes.data;
+        usersData = usersRes.data?.data || usersRes.data;
+        
+        // Super Admin gets all bookings from stats or another call
+        const bookingsRes = await bookingAPI.getAllAdmin(session?.accessToken);
+        bookingsData = bookingsRes.data?.data || bookingsRes.data;
+      } else {
+        const [statsRes, bookingsRes, resortsRes] = await Promise.all([
+          bookingAPI.getDashboardStats(session?.accessToken),
+          bookingAPI.getAllAdmin(session?.accessToken),
+          resortAPI.getAll(session?.accessToken) // Or manager resorts API if implemented
+        ]);
+        
+        statsData = statsRes.data?.data?.stats || statsRes.data?.stats;
+        bookingsData = bookingsRes.data?.data || bookingsRes.data;
+        resortsData = resortsRes.data?.data || resortsRes.data;
+      }
+
+      setResorts(Array.isArray(resortsData) ? resortsData : []);
+      setBookings(Array.isArray(bookingsData) ? bookingsData : []);
+      setUsers(Array.isArray(usersData) ? usersData : []);
+
+      setStats({
+        totalResorts: statsData?.totalResorts || resortsData?.length || 0,
+        totalBookings: statsData?.totalBookings || bookingsData?.length || 0,
+        pendingBookings: statsData?.pendingResorts || statsData?.pendingBookings || 0,
+        confirmedBookings: statsData?.totalRevenue ? 1 : (statsData?.confirmedBookings || 0), // Placeholder logic if stats differ
+      });
+    } catch (error) {
+      console.error('Failed to fetch admin data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.accessToken, currentUser?.role]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -119,130 +133,28 @@ export default function AdminDashboard() {
     }
 
     // Check if user has admin or superadmin role
-    const userRole = (session.user as any)?.role;
-    if (userRole !== 'admin' && userRole !== 'superadmin') {
+    const userRole = session.user.role as string;
+    const normalizedRole = userRole.toLowerCase();
+    
+    if (normalizedRole !== 'admin' && normalizedRole !== 'superadmin') {
       router.push('/');
       return;
     }
 
-    // Set current user from session
-    const userData = {
-      ...(session.user as User),
-      role: userRole,
-    };
-    setCurrentUser(userData as User);
+    setCurrentUser(session.user as any as User);
     fetchData();
-  }, [router, session, status]);
+  }, [router, session, status, fetchData]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const promises = [
-        resortAPI.getAll(session?.accessToken),
-        bookingAPI.getAllAdmin(session?.accessToken),
-      ];
-
-      // Fetch users only for superadmins
-      if (currentUser?.role === 'superadmin') {
-        promises.push(userAPI.getAll(session?.accessToken));
-      }
-
-      const [resortsRes, bookingsRes, usersRes] = await Promise.all(promises);
-
-      const resortsData = resortsRes?.data?.data ?? resortsRes?.data ?? [];
-      const bookingsData = bookingsRes?.data?.data ?? bookingsRes?.data ?? [];
-      const usersData = usersRes?.data?.data ?? usersRes?.data ?? [];
-
-      setResorts(Array.isArray(resortsData) ? resortsData : []);
-      setBookings(Array.isArray(bookingsData) ? bookingsData : []);
-      if (currentUser?.role === 'superadmin') {
-        setUsers(Array.isArray(usersData) ? usersData : []);
-      }
-
-      // Calculate stats
-      setStats({
-        totalResorts: resortsData.length || 0,
-        totalBookings: bookingsData.length || 0,
-        pendingBookings: bookingsData.filter((b: Booking) => b.status === 'pending').length || 0,
-        confirmedBookings: bookingsData.filter((b: Booking) => b.status === 'confirmed').length || 0,
-      });
-    } catch (error) {
-      console.error('Failed to fetch admin data:', error);
-    } finally {
-      setLoading(false);
+  // Reset tab value if current tab is not available for the user's role
+  useEffect(() => {
+    const role = currentUser?.role?.toLowerCase();
+    if (role === 'admin' && tabValue > 1) {
+      setTabValue(1); 
     }
-  };
+  }, [currentUser?.role, tabValue]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-  };
-
-  // Resort management functions
-  const handleOpenResortDialog = (resort?: Resort) => {
-    if (resort) {
-      setEditingResort(resort);
-      setResortForm({
-        name: resort.name,
-        description: resort.description,
-        location: resort.location,
-        latitude: resort.latitude,
-        longitude: resort.longitude,
-        pricePerNight: resort.pricePerNight,
-        amenities: resort.amenities.join(', '),
-        maxGuests: resort.maxGuests,
-        rooms: resort.rooms,
-      });
-    } else {
-      setEditingResort(null);
-      setResortForm({
-        name: '',
-        description: '',
-        location: '',
-        latitude: 0,
-        longitude: 0,
-        pricePerNight: 0,
-        amenities: '',
-        maxGuests: 1,
-        rooms: 1,
-      });
-    }
-    setResortDialog(true);
-  };
-
-  const handleCloseResortDialog = () => {
-    setResortDialog(false);
-    setEditingResort(null);
-  };
-
-  const handleSaveResort = async () => {
-    try {
-      const resortData = {
-        ...resortForm,
-        amenities: resortForm.amenities.split(',').map(a => a.trim()),
-      };
-
-      if (editingResort) {
-        await resortAPI.update(editingResort.id!, resortData, session?.accessToken);
-      } else {
-        await resortAPI.create(resortData, session?.accessToken);
-      }
-
-      handleCloseResortDialog();
-      fetchData();
-    } catch (error) {
-      console.error('Failed to save resort:', error);
-    }
-  };
-
-  const handleDeleteResort = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this resort?')) {
-      try {
-        await resortAPI.delete(id, session?.accessToken);
-        fetchData();
-      } catch (error) {
-        console.error('Failed to delete resort:', error);
-      }
-    }
   };
 
   // Booking management functions
@@ -252,66 +164,6 @@ export default function AdminDashboard() {
       fetchData();
     } catch (error) {
       console.error('Failed to update booking status:', error);
-    }
-  };
-
-  // User management functions
-  const handleOpenUserDialog = (user?: User) => {
-    if (user) {
-      setEditingUser(user);
-      setUserForm({
-        name: user.name,
-        email: user.email,
-        phone: user.phone ?? '',
-        role: user.role as 'admin' | 'superadmin',
-        password: '', // Don't populate password for editing
-      });
-    } else {
-      setEditingUser(null);
-      setUserForm({
-        name: '',
-        email: '',
-        phone: '',
-        role: 'admin',
-        password: '',
-      });
-    }
-    setUserDialog(true);
-  };
-
-  const handleCloseUserDialog = () => {
-    setUserDialog(false);
-    setEditingUser(null);
-  };
-
-  const handleSaveUser = async () => {
-    try {
-      const userData = {
-        ...userForm,
-        ...(editingUser ? {} : { password: userForm.password }), // Only include password for new users
-      };
-
-      if (editingUser) {
-        await userAPI.update(editingUser.id!, userData, session?.accessToken);
-      } else {
-        await userAPI.create(userData, session?.accessToken);
-      }
-
-      handleCloseUserDialog();
-      fetchData();
-    } catch (error) {
-      console.error('Failed to save user:', error);
-    }
-  };
-
-  const handleDeleteUser = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        await userAPI.delete(id, session?.accessToken);
-        fetchData();
-      } catch (error) {
-        console.error('Failed to delete user:', error);
-      }
     }
   };
 
@@ -336,117 +188,203 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <Box sx={{ py: 4, px: 2, maxWidth: 1200, mx: 'auto' }}>
-        <Typography variant="h5" component="h1" sx={{ mb: 3, fontWeight: 600, color: '#0a0a0a' }}>
-          Admin
+      <Box sx={{ py: 4, px: 2 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+          Admin Dashboard
         </Typography>
 
       {/* Overview Stats */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
-            <CardContent sx={{ py: 2 }}>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <HotelIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Total Resorts</Typography>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <HotelIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Total Resorts</Typography>
               </Box>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.totalResorts}</Typography>
+              <Typography variant="h4" color="primary">{stats.totalResorts}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
-            <CardContent sx={{ py: 2 }}>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <BookingIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Total Bookings</Typography>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <BookingIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">Total Bookings</Typography>
               </Box>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.totalBookings}</Typography>
+              <Typography variant="h4" color="primary">{stats.totalBookings}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
-            <CardContent sx={{ py: 2 }}>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <BookingIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Pending</Typography>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <BookingIcon sx={{ mr: 1, color: 'warning.main' }} />
+                <Typography variant="h6">Pending</Typography>
               </Box>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.pendingBookings}</Typography>
+              <Typography variant="h4" sx={{ color: 'warning.main' }}>{stats.pendingBookings}</Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
-            <CardContent sx={{ py: 2 }}>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <BookingIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Confirmed</Typography>
+          <Card>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={1}>
+                <BookingIcon sx={{ mr: 1, color: 'success.main' }} />
+                <Typography variant="h6">Confirmed</Typography>
               </Box>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>{stats.confirmedBookings}</Typography>
+              <Typography variant="h4" sx={{ color: 'success.main' }}>{stats.confirmedBookings}</Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       {/* Tabs */}
-      <Paper variant="outlined" sx={{ width: '100%', borderColor: '#e5e5e5', boxShadow: 'none' }}>
+      <Paper sx={{ width: '100%' }}>
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          sx={{
-            borderBottom: '1px solid #e5e5e5',
-            '& .MuiTab-root': { textTransform: 'none', fontWeight: 500 },
-            '& .Mui-selected': { color: '#0a0a0a' },
-            '& .MuiTabs-indicator': { backgroundColor: '#0a0a0a' },
-          }}
+          indicatorColor="primary"
+          textColor="primary"
+          variant="fullWidth"
         >
           <Tab icon={<DashboardIcon />} label="Overview" />
-          <Tab icon={<HotelIcon />} label="Manage Resorts" />
           <Tab icon={<BookingIcon />} label="Manage Bookings" />
-          {currentUser && currentUser.role === 'superadmin' && (
-            <Tab icon={<PeopleIcon />} label="Manage Users" />
-          )}
         </Tabs>
 
         {/* Overview Tab */}
         <TabPanel value={tabValue} index={0}>
           <Box>
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
-                Welcome, {currentUser?.name || 'Admin'}
+            {/* Welcome Header */}
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                p: 4,
+                borderRadius: 3,
+                color: 'white',
+                mb: 4,
+                textAlign: 'center'
+              }}
+            >
+              <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+                Welcome back, {currentUser?.name || 'Admin'}!
               </Typography>
-              <Typography variant="body2" sx={{ color: '#737373' }}>
-                {currentUser?.role === 'superadmin'
-                  ? 'Manage users, resorts, and the system'
-                  : 'Manage resorts and bookings'}
+              <Typography variant="h6" sx={{ opacity: 0.9, mb: 1 }}>
+                {(currentUser?.role as string)?.toLowerCase() === 'superadmin' ? 'Super Admin Dashboard' : 'Admin Dashboard'}
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                {(currentUser?.role as string)?.toLowerCase() === 'superadmin'
+                  ? 'Manage users, resorts, and oversee the entire system'
+                  : 'Manage bookings and oversee resort operations'
+                }
               </Typography>
             </Box>
 
-            {currentUser?.role === 'superadmin' && (
-              <Grid container spacing={2} sx={{ mb: 4 }}>
+            {/* System Stats */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: 'translateY(-4px)' }
+                }}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <HotelIcon sx={{ mr: 1, fontSize: 28 }} />
+                      <Typography variant="h6">Total Resorts</Typography>
+                    </Box>
+                    <Typography variant="h3" fontWeight="bold">{stats.totalResorts}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                  color: 'white',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: 'translateY(-4px)' }
+                }}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <BookingIcon sx={{ mr: 1, fontSize: 28 }} />
+                      <Typography variant="h6">Total Bookings</Typography>
+                    </Box>
+                    <Typography variant="h3" fontWeight="bold">{stats.totalBookings}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                  color: 'white',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: 'translateY(-4px)' }
+                }}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <BookingIcon sx={{ mr: 1, fontSize: 28 }} />
+                      <Typography variant="h6">Pending</Typography>
+                    </Box>
+                    <Typography variant="h3" fontWeight="bold">{stats.pendingBookings}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card sx={{
+                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                  color: 'white',
+                  transition: 'transform 0.2s',
+                  '&:hover': { transform: 'translateY(-4px)' }
+                }}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={1}>
+                      <BookingIcon sx={{ mr: 1, fontSize: 28 }} />
+                      <Typography variant="h6">Confirmed</Typography>
+                    </Box>
+                    <Typography variant="h3" fontWeight="bold">{stats.confirmedBookings}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            {/* Super Admin Additional Stats */}
+            {((currentUser?.role as string)?.toLowerCase() === 'superadmin') && (
+              <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
-                    <CardContent sx={{ py: 2 }}>
-                      <Box display="flex" alignItems="center" mb={0.5}>
-                        <AdminIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Admins</Typography>
+                  <Card sx={{
+                    background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                    color: 'white',
+                    transition: 'transform 0.2s',
+                    '&:hover': { transform: 'translateY(-4px)' }
+                  }}>
+                    <CardContent>
+                      <Box display="flex" alignItems="center" mb={1}>
+                        <AdminIcon sx={{ mr: 1, fontSize: 28 }} />
+                        <Typography variant="h6">Total Admins</Typography>
                       </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
-                        {users.filter(u => u.role === 'admin').length}
+                      <Typography variant="h3" fontWeight="bold">
+                        {users.filter(u => (u.role as string)?.toLowerCase() === 'admin').length}
                       </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
-                    <CardContent sx={{ py: 2 }}>
-                      <Box display="flex" alignItems="center" mb={0.5}>
-                        <SecurityIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Super Admins</Typography>
+                  <Card sx={{
+                    background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+                    color: 'white',
+                    transition: 'transform 0.2s',
+                    '&:hover': { transform: 'translateY(-4px)' }
+                  }}>
+                    <CardContent>
+                      <Box display="flex" alignItems="center" mb={1}>
+                        <SecurityIcon sx={{ mr: 1, fontSize: 28 }} />
+                        <Typography variant="h6">Super Admins</Typography>
                       </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
-                        {users.filter(u => u.role === 'superadmin').length}
+                      <Typography variant="h3" fontWeight="bold">
+                        {users.filter(u => (u.role as string)?.toLowerCase() === 'superadmin').length}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -454,144 +392,167 @@ export default function AdminDashboard() {
               </Grid>
             )}
 
-            <Alert severity="info" sx={{ borderRadius: 1.5, border: '1px solid #e5e5e5', bgcolor: '#fafafa' }} icon={false}>
-              <Typography variant="body2" sx={{ color: '#737373' }}>
-                Use the tabs above to manage resorts and bookings.
-                {currentUser?.role === 'superadmin' && ' You can also manage user accounts.'}
-              </Typography>
-            </Alert>
-          </Box>
-        </TabPanel>
-
-        {/* Manage Resorts Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
-                  Resorts
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#737373' }}>
-                  Create and manage properties
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenResortDialog()}
-                sx={{
-                  bgcolor: '#0a0a0a',
-                  fontWeight: 500,
-                  '&:hover': { bgcolor: '#262626' },
-                }}
-              >
-                Add resort
-              </Button>
-            </Box>
-
-            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#fafafa' }}>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Location</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Price/Night</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Rooms</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {resorts.map((resort, index) => (
-                    <TableRow
-                      key={resort.id ?? resort._id ?? index}
-                      sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}
+            {/* Quick Actions */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Quick Actions</Typography>
+              <Grid container spacing={2}>
+                {((currentUser?.role as string)?.toLowerCase() === 'superadmin') && (
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      startIcon={<HotelIcon />}
+                      onClick={() => router.push('/admin/resorts')}
+                      sx={{
+                        py: 2,
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                        }
+                      }}
                     >
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.name}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.location}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>{formatRupee(resort.pricePerNight)}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{resort.rooms}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5' }}>
-                        <Button
-                          size="small"
-                          startIcon={<EditIcon />}
-                          onClick={() => handleOpenResortDialog(resort)}
-                          sx={{ mr: 0.5, color: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          startIcon={<DeleteIcon />}
-                          onClick={() => handleDeleteResort(resort.id ?? resort._id!)}
-                          sx={{ color: '#dc2626', fontWeight: 500, '&:hover': { bgcolor: 'rgba(220,38,38,0.08)' } }}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {resorts.length === 0 && (
-              <Box textAlign="center" py={6}>
-                <HotelIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
-                <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No resorts</Typography>
-                <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Add your first resort above</Typography>
-              </Box>
-            )}
+                      Manage Resorts
+                    </Button>
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    startIcon={<BookingIcon />}
+                    onClick={() => setTabValue(1)}
+                    sx={{
+                      py: 2,
+                      background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #6a4190 0%, #5a6fd8 100%)',
+                      }
+                    }}
+                  >
+                    Manage Bookings
+                  </Button>
+                </Grid>
+                {((currentUser?.role as string)?.toLowerCase() === 'superadmin') && (
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      startIcon={<PeopleIcon />}
+                      onClick={() => router.push('/admin/users')}
+                      sx={{
+                        py: 2,
+                        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #e55a50 0%, #d64a1f 100%)',
+                        }
+                      }}
+                    >
+                      Manage Users
+                    </Button>
+                  </Grid>
+                )}
+              </Grid>
+            </Box>
           </Box>
         </TabPanel>
 
         {/* Manage Bookings Tab */}
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={tabValue} index={1}>
           <Box>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Bookings</Typography>
-              <Typography variant="body2" sx={{ color: '#737373' }}>Review and manage reservations</Typography>
+            {/* Header */}
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                p: 3,
+                borderRadius: 2,
+                color: 'white',
+                mb: 4,
+                textAlign: 'center'
+              }}
+            >
+              <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
+                <BookingIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Booking Management
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                Review and manage customer reservations
+              </Typography>
             </Box>
 
-            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#fafafa' }}>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>ID</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Resort</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Check-in</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Check-out</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Guests</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Total</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Actions</TableCell>
+            {/* Bookings Table */}
+            <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+              <Table>
+                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>ID</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Resort</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Check-in</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Check-out</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Guests</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Total Price</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {bookings.map((booking) => (
-                    <TableRow key={booking.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{(booking.id ?? booking._id ?? '').slice(-8)}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{booking.resort?.name || '—'}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkInDate).toLocaleDateString()}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{new Date(booking.checkOutDate).toLocaleDateString()}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{booking.numberOfGuests}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5', fontWeight: 500, fontSize: '0.875rem' }}>{formatRupee(booking.totalPrice)}</TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5' }}>
+                    <TableRow
+                      key={booking._id || booking.id}
+                      sx={{
+                        '&:hover': { backgroundColor: '#f9f9f9' },
+                        transition: 'background-color 0.2s'
+                      }}
+                    >
+                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                        {(booking._id || booking.id).slice(-8)}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>
+                        {booking.resortId?.name || 'Unknown'}
+                      </TableCell>
+                      <TableCell>{new Date(booking.checkIn).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(booking.checkOut).toLocaleDateString()}</TableCell>
+                      <TableCell>{booking.guests}</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        ${booking.totalPrice}
+                      </TableCell>
+                      <TableCell>
                         <Chip
                           label={booking.status}
-                          color={getStatusColor(booking.status)}
+                          color={getStatusColor(booking.status.toLowerCase() as any)}
                           size="small"
-                          variant="outlined"
-                          sx={{ fontWeight: 500, textTransform: 'capitalize', fontSize: '0.75rem' }}
+                          variant="filled"
+                          sx={{
+                            fontWeight: 'bold',
+                            textTransform: 'capitalize'
+                          }}
                         />
                       </TableCell>
-                      <TableCell sx={{ borderColor: '#e5e5e5' }}>
-                        {booking.status === 'pending' && (
+                      <TableCell>
+                        {(booking.status.toLowerCase() === 'pending') && (
                           <Box>
-                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id ?? booking._id ?? '', 'confirmed')} sx={{ mr: 0.5, color: '#16a34a', fontWeight: 500 }}>
+                            <Button
+                              size="small"
+                              color="success"
+                              onClick={() => handleUpdateBookingStatus(booking._id || booking.id, 'Confirmed')}
+                              sx={{
+                                mr: 1,
+                                backgroundColor: '#2e7d32',
+                                color: 'white',
+                                '&:hover': { backgroundColor: '#1b5e20' }
+                              }}
+                            >
                               Confirm
                             </Button>
-                            <Button size="small" onClick={() => handleUpdateBookingStatus(booking.id ?? booking._id ?? '', 'cancelled')} sx={{ color: '#dc2626', fontWeight: 500 }}>
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => handleUpdateBookingStatus(booking._id || booking.id, 'Cancelled')}
+                              sx={{
+                                backgroundColor: '#d32f2f',
+                                color: 'white',
+                                '&:hover': { backgroundColor: '#b71c1c' }
+                              }}
+                            >
                               Cancel
                             </Button>
                           </Box>
@@ -605,316 +566,21 @@ export default function AdminDashboard() {
 
             {bookings.length === 0 && (
               <Box textAlign="center" py={6}>
-                <BookingIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
-                <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No bookings</Typography>
-                <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Reservations will appear here</Typography>
+                <BookingIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
+                <Typography variant="h6" color="textSecondary">
+                  No bookings found
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Bookings will appear here once customers make reservations
+                </Typography>
               </Box>
             )}
           </Box>
         </TabPanel>
-
-        {/* Manage Users Tab (Super Admin Only) */}
-        {currentUser?.role === 'superadmin' && (
-          <TabPanel value={tabValue} index={3}>
-            <Box>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Users</Typography>
-                  <Typography variant="body2" sx={{ color: '#737373' }}>Manage admin accounts</Typography>
-                </Box>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<PersonAddIcon />}
-                  onClick={() => handleOpenUserDialog()}
-                  sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}
-                >
-                  Add admin
-                </Button>
-              </Box>
-
-              <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: '#fafafa' }}>
-                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Email</TableCell>
-                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Phone</TableCell>
-                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Role</TableCell>
-                      <TableCell sx={{ fontWeight: 600, fontSize: '0.8125rem', color: '#0a0a0a', borderColor: '#e5e5e5' }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id} sx={{ '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}>
-                        <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{user.name}</TableCell>
-                        <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{user.email}</TableCell>
-                        <TableCell sx={{ borderColor: '#e5e5e5', fontSize: '0.875rem' }}>{user.phone || '—'}</TableCell>
-                        <TableCell sx={{ borderColor: '#e5e5e5' }}>
-                          <Chip
-                            label={user.role}
-                            size="small"
-                            variant="outlined"
-                            sx={{
-                              fontWeight: 500,
-                              textTransform: 'capitalize',
-                              fontSize: '0.75rem',
-                              borderColor: '#e5e5e5',
-                              color: '#0a0a0a',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell sx={{ borderColor: '#e5e5e5' }}>
-                          <Button
-                            size="small"
-                            startIcon={<EditIcon />}
-                            onClick={() => handleOpenUserDialog(user)}
-                            sx={{ mr: 0.5, color: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' } }}
-                          >
-                            Edit
-                          </Button>
-                          {user.role !== 'superadmin' && (
-                            <Button
-                              size="small"
-                              startIcon={<DeleteIcon />}
-                              onClick={() => handleDeleteUser(user.id ?? user._id ?? '')} 
-                              sx={{ color: '#dc2626', fontWeight: 500, '&:hover': { bgcolor: 'rgba(220,38,38,0.08)' } }}
-                            >
-                              Delete
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              {users.length === 0 && (
-                <Box textAlign="center" py={6}>
-                  <PeopleIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
-                  <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No users</Typography>
-                  <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Add an admin above</Typography>
-                </Box>
-              )}
-            </Box>
-          </TabPanel>
-        )}
       </Paper>
     </Box>
 
-      {/* Resort Dialog */}
-      <Dialog
-        open={resortDialog}
-        onClose={handleCloseResortDialog}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 2, border: '1px solid #e5e5e5' } }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, fontSize: '1.125rem', color: '#0a0a0a' }}>
-          {editingResort ? 'Edit resort' : 'Add resort'}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Name"
-                value={resortForm.name}
-                onChange={(e) => setResortForm({ ...resortForm, name: e.target.value })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Location"
-                value={resortForm.location}
-                onChange={(e) => setResortForm({ ...resortForm, location: e.target.value })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Description"
-                value={resortForm.description}
-                onChange={(e) => setResortForm({ ...resortForm, description: e.target.value })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Price per Night"
-                value={resortForm.pricePerNight}
-                onChange={(e) => setResortForm({ ...resortForm, pricePerNight: Number(e.target.value) })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Max Guests"
-                value={resortForm.maxGuests}
-                onChange={(e) => setResortForm({ ...resortForm, maxGuests: Number(e.target.value) })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Rooms"
-                value={resortForm.rooms}
-                onChange={(e) => setResortForm({ ...resortForm, rooms: Number(e.target.value) })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Amenities (comma-separated)"
-                value={resortForm.amenities}
-                onChange={(e) => setResortForm({ ...resortForm, amenities: e.target.value })}
-                helperText="e.g., WiFi, Pool, Spa, Restaurant"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Latitude"
-                value={resortForm.latitude}
-                onChange={(e) => setResortForm({ ...resortForm, latitude: Number(e.target.value) })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Longitude"
-                value={resortForm.longitude}
-                onChange={(e) => setResortForm({ ...resortForm, longitude: Number(e.target.value) })}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCloseResortDialog} sx={{ color: '#737373', fontWeight: 500 }}>Cancel</Button>
-          <Button onClick={handleSaveResort} variant="contained" sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}>
-            {editingResort ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      {/* User Dialog (Super Admin Only) */}
-      <Dialog
-        open={userDialog}
-        onClose={handleCloseUserDialog}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 2, border: '1px solid #e5e5e5' } }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, fontSize: '1.125rem', color: '#0a0a0a', pt: 3, pb: 0 }}>
-          {editingUser ? 'Edit user' : 'Add admin'}
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Full Name"
-                value={userForm.name}
-                onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Email Address"
-                type="email"
-                value={userForm.email}
-                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Phone Number"
-                value={userForm.phone}
-                onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                select
-                label="User Role"
-                value={userForm.role}
-                onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'admin' | 'superadmin' })}
-                SelectProps={{
-                  native: true,
-                }}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  }
-                }}
-                helperText={userForm.role === 'superadmin' ? 'Super admins can manage other users' : 'Admins can manage resorts and bookings'}
-              >
-                <option value="admin">Admin</option>
-                <option value="superadmin">Super Admin</option>
-              </TextField>
-            </Grid>
-            {!editingUser && (
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Password"
-                  type="password"
-                  value={userForm.password}
-                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                  variant="outlined"
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                    }
-                  }}
-                  helperText="Minimum 8 characters required"
-                />
-              </Grid>
-            )}
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button onClick={handleCloseUserDialog} sx={{ color: '#737373', fontWeight: 500 }}>Cancel</Button>
-          <Button
-            onClick={handleSaveUser}
-            variant="contained"
-            sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}
-          >
-            {editingUser ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   );
 }

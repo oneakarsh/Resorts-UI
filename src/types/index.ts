@@ -1,15 +1,13 @@
 export interface User {
-  id?: string;
+  id: string;
   _id?: string;
   name: string;
   email: string;
   phone?: string;
-  role: 'user' | 'admin' | 'superadmin';
+  role: 'Guest' | 'Admin' | 'SuperAdmin' | 'ResortOwner';
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
-  createdBy?: string;
-  permissions?: string[];
 }
 
 export interface Resort {
@@ -18,33 +16,35 @@ export interface Resort {
   name: string;
   description: string;
   location: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   pricePerNight: number;
   amenities: string[];
-  maxGuests: number;
-  rooms: number;
+  maxGuests?: number;
+  rooms?: any;
+  ownerId?: string | User;
+  verified?: boolean;
+  images?: string[];
   rating?: number;
-  image?: string;
-  isActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface Booking {
-  id?: string;
+  id: string;
   _id?: string;
-  userId: string;
-  resortId: string;
+  userId: string | User;
+  resortId: string | any;
   resort?: Resort;
-  checkInDate: string;
-  checkOutDate: string;
-  numberOfGuests: number;
+  roomId?: string | any;
+  checkIn: string;
+  checkOut: string;
+  checkInDate?: string;
+  checkOutDate?: string;
+  guests: number;
+  numberOfGuests?: number;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  specialRequests?: string;
-  paymentMethod?: 'credit_card' | 'debit_card' | 'paypal';
-  createdAt?: string;
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed' | 'pending' | 'confirmed' | 'cancelled';
+  paymentStatus?: 'Unpaid' | 'Paid' | 'Refunded';
+  createdAt: string;
   updatedAt?: string;
 }
 

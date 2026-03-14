@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 export const authOptions = {
   providers: [
@@ -23,7 +23,7 @@ export const authOptions = {
             password: credentials.password,
           });
 
-          const { token, user } = response.data;
+          const { token, user } = response.data.data;
 
           if (token && user) {
             return {

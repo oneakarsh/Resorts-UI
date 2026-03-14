@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,41 +11,38 @@ const api = axios.create({
   },
 });
 
-// Add token to requests - this will be handled differently for client vs server
-// For client components, we'll need to pass the token manually or use a different approach
+// Add token to requests
 api.interceptors.request.use((config) => {
-  // This interceptor is mainly for server-side usage
-  // Client-side components should pass the token directly
   return config;
 });
 
 // Auth APIs
 export const authAPI = {
-  register: (data: { name: string; email: string; password: string; confirmPassword: string; phone: string }) =>
+  register: (data: any) =>
     api.post('/auth/register', data),
-  login: (data: { email: string; password: string }) =>
+  login: (data: any) =>
     api.post('/auth/login', data),
-  profile: (token?: string) => {
+  getMe: (token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/auth/profile', config);
+    return api.get('/auth/me', config);
   },
 };
 
 // Resort APIs
 export const resortAPI = {
-  getAll: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  getAll: (token?: string, params?: any) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` }, params } : { params };
     return api.get('/resorts', config);
   },
   getById: (id: string, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.get(`/resorts/${id}`, config);
   },
-  create: (data: Record<string, unknown>, token?: string) => {
+  create: (data: any, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.post('/resorts', data, config);
   },
-  update: (id: string, data: Record<string, unknown>, token?: string) => {
+  update: (id: string, data: any, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.put(`/resorts/${id}`, data, config);
   },
@@ -57,7 +54,7 @@ export const resortAPI = {
 
 // Booking APIs
 export const bookingAPI = {
-  create: (data: Record<string, unknown>, token?: string) => {
+  create: (data: any, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.post('/bookings', data, config);
   },
@@ -69,36 +66,45 @@ export const bookingAPI = {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.get(`/bookings/${id}`, config);
   },
+  // Manager/Admin APIs
   updateStatus: (id: string, status: string, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.patch(`/bookings/${id}/status`, { status }, config);
-  },
-  cancel: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.patch(`/bookings/${id}/cancel`, {}, config);
+    return api.put(`/admin/bookings/${id}/status`, { status }, config);
   },
   getAllAdmin: (token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/bookings/admin/all', config);
+    return api.get('/admin/bookings', config);
+  },
+  getDashboardStats: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/admin/stats', config);
   },
 };
 
-// User APIs (for super admin)
+// Super Admin APIs
+export const superAdminAPI = {
+  getStats: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/superadmin/stats', config);
+  },
+  getAllUsers: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/superadmin/users', config);
+  },
+  verifyResort: (id: string, verified: boolean, token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.put(`/superadmin/resorts/${id}/verify`, { verified }, config);
+  },
+  getAllResorts: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/superadmin/resorts', config);
+  },
+};
+
+// Individual User Management (from users.routes.js)
 export const userAPI = {
   getAll: (token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/users', config);
-  },
-  create: (data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.post('/users', data, config);
-  },
-  update: (id: string, data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.put(`/users/${id}`, data, config);
-  },
-  delete: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.delete(`/users/${id}`, config);
+    return api.get('/users/users', config);
   },
 };

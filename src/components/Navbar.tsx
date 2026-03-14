@@ -15,6 +15,8 @@ import {
   Tune as TuneOffIcon,
   NotificationsNone as NotificationsIcon,
   ChatBubbleOutline as ChatIcon,
+  FilterAlt as FilterAltIcon,
+  FilterAltOff,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,11 +32,6 @@ const RegisterDialog = dynamic(() => import('./RegisterDialog'), { ssr: false })
 export default function Navbar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { data: session, status } = useSession();
-
-  if (typeof window !== 'undefined') {
-    // eslint-disable-next-line no-console
-    console.log('[Navbar] session=', session, 'status=', status);
-  }
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -61,7 +58,14 @@ export default function Navbar() {
   };
 
   const handleSearch = () => {
-    console.log('Searching for:', searchQuery, filters);
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('name', searchQuery);
+    if (filters.location) params.append('location', filters.location);
+    if (filters.amenities.length > 0) params.append('amenities', filters.amenities.join(','));
+    if (filters.priceRange[0] > 0) params.append('minPrice', filters.priceRange[0].toString());
+    if (filters.priceRange[1] < 2000) params.append('maxPrice', filters.priceRange[1].toString());
+    
+    router.push(`/?${params.toString()}`);
   };
 
   const handleFilterChange = (key: string, value: unknown) => {
@@ -136,26 +140,31 @@ export default function Navbar() {
           <Box
             sx={{
               flex: 1,
-              maxWidth: 320,
+              maxWidth: 360,
               mx: 2,
               display: 'flex',
               alignItems: 'center',
-              gap: 0.5,
+              gap: 1,
             }}
           >
             <SearchBar
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
+              onSearch={handleSearch}
             />
             <IconButton
               size="small"
               onClick={() => setShowSearch(!showSearch)}
               sx={{
-                color: '#737373',
-                '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', color: '#0a0a0a' },
+                width: 32,
+                height: 32,
+                borderRadius: 1.5,
+                color: '#1976d2',
+                backgroundColor: 'rgba(25,118,210,0.1)',
+                border: '1px solid rgba(25,118,210,0.2)',
               }}
             >
-              {showSearch ? <TuneOffIcon fontSize="small" /> : <FilterListIcon fontSize="small" />}
+              {showSearch ? <FilterAltOff fontSize="small" /> : <FilterAltIcon fontSize="small" />}
             </IconButton>
           </Box>
 
@@ -185,7 +194,7 @@ export default function Navbar() {
                   <ChatIcon fontSize="small" />
                 </IconButton>
                 <UserMenu
-                  user={{ name: session.user?.name || '', role: (session.user as { role?: string })?.role || 'user' }}
+                  user={{ name: session.user?.name || '', role: (session.user as any)?.role || 'Guest' }}
                   anchorEl={anchorEl}
                   onMenuOpen={e => setAnchorEl(e.currentTarget)}
                   onMenuClose={() => setAnchorEl(null)}
@@ -241,31 +250,24 @@ export default function Navbar() {
         onSuccess={handleRegisterSuccess}
         onSwitchToLogin={handleSwitchToLogin}
       />
-      {/* Notifications dialog */}
-      <div>
-        <Dialog open={openNotifications} onClose={() => setOpenNotifications(false)}>
-          <Box sx={{ p: 2, minWidth: 320 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Notifications</Typography>
-            <Typography variant="body2" sx={{ color: '#737373' }}>You have no new notifications.</Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <Button onClick={() => setOpenNotifications(false)}>Close</Button>
-            </Box>
+      <Dialog open={openNotifications} onClose={() => setOpenNotifications(false)}>
+        <Box sx={{ p: 2, minWidth: 320 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Notifications</Typography>
+          <Typography variant="body2" sx={{ color: '#737373' }}>You have no new notifications.</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button onClick={() => setOpenNotifications(false)}>Close</Button>
           </Box>
-        </Dialog>
-      </div>
-
-      {/* Chat dialog */}
-      <div>
-        <Dialog open={openChat} onClose={() => setOpenChat(false)}>
-          <Box sx={{ p: 2, minWidth: 320 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Messages</Typography>
-            <Typography variant="body2" sx={{ color: '#737373' }}>This is a demo chat popup.</Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <Button onClick={() => setOpenChat(false)}>Close</Button>
-            </Box>
+        </Box>
+      </Dialog>
+      <Dialog open={openChat} onClose={() => setOpenChat(false)}>
+        <Box sx={{ p: 2, minWidth: 320 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Messages</Typography>
+          <Typography variant="body2" sx={{ color: '#737373' }}>This is a demo chat popup.</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button onClick={() => setOpenChat(false)}>Close</Button>
           </Box>
-        </Dialog>
-      </div>
+        </Box>
+      </Dialog>
     </>
   );
 }

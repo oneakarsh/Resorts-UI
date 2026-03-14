@@ -27,6 +27,8 @@ export default function UserMenu({
   onLogout,
   onNavigate,
 }: UserMenuProps) {
+  const normalizedRole = user.role.toLowerCase();
+
   return (
     <>
       <Button
@@ -77,22 +79,31 @@ export default function UserMenu({
         <MenuItem onClick={() => { onMenuClose(); onNavigate('/profile'); }}>
           Profile
         </MenuItem>
-        {(user.role === 'admin' || user.role === 'superadmin') && (
+        
+        {(normalizedRole === 'admin' || normalizedRole === 'superadmin') && (
           <MenuItem onClick={() => { onMenuClose(); onNavigate('/admin'); }}>
-            Admin
+            Admin Dashboard
           </MenuItem>
         )}
-        {user.role === 'superadmin' && (
+
+        {normalizedRole === 'superadmin' && (
           <MenuItem onClick={() => { onMenuClose(); onNavigate('/roles'); }}>
             Roles & Permissions
           </MenuItem>
         )}
+
+        {normalizedRole === 'resortowner' && (
+          <MenuItem onClick={() => { onMenuClose(); onNavigate('/admin'); }}>
+            🏨 Manage Properties
+          </MenuItem>
+        )}
+
         <Divider sx={{ my: 1, borderColor: '#e5e5e5' }} />
         <MenuItem
           onClick={onLogout}
           sx={{ color: '#dc2626', fontWeight: 500 }}
         >
-          Log out
+          Logout
         </MenuItem>
       </Menu>
     </>

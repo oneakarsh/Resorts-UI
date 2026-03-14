@@ -1,207 +1,89 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import {
-  Typography,
-  Box,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Paper,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
-import { useSession } from 'next-auth/react';
-import { authAPI } from '@/lib/api';
-import type { User } from '@/types';
-
-type Profile = User & {
-  createdAt?: string;
-  joinedAt?: string;
-};
+import React from 'react';
+import { Container, Typography, Box, Avatar, List, ListItem, ListItemText, Divider, Paper, Alert, Button } from '@mui/material';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    if (status !== 'authenticated' || !session) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await authAPI.profile((session as any).accessToken);
-        const payload = (res.data as any)?.data ?? res.data;
-        const user: Profile = (payload?.user as Profile) ?? (payload as Profile);
-        setProfile(user);
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { message?: string } }; message?: string };
-        setError(e.response?.data?.message || e.message || 'Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [session, status]);
-
-  if (loading) {
-    return (
-      <Box sx={{ py: 4, px: 2, maxWidth: 560, mx: 'auto', display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress sx={{ color: '#0a0a0a' }} />
-      </Box>
-    );
+  if (status === 'loading') {
+    return <Box sx={{ py: 8, textAlign: 'center' }}>Loading...</Box>;
   }
 
-  if (status !== 'authenticated') {
+  if (status === 'unauthenticated' || !session) {
     return (
-      <Box sx={{ py: 4, px: 2, maxWidth: 560, mx: 'auto' }}>
-        <Alert severity="info" sx={{ borderRadius: 2 }}>
-          Please log in to view your profile.
+      <Container maxWidth="sm" sx={{ mt: 8 }}>
+        <Alert severity="info" action={
+          <Button color="inherit" size="small" onClick={() => router.push('/')}>
+            Go Home
+          </Button>
+        }>
+          Please sign in to view your profile.
         </Alert>
-      </Box>
+      </Container>
     );
   }
 
-  const joined =
-    (profile?.createdAt && new Date(profile.createdAt).toLocaleDateString()) ||
-    (profile?.joinedAt && new Date(profile.joinedAt).toLocaleDateString()) ||
-    '';
-
-  const initials = (profile?.name || session?.user?.name || 'U')
-    .split(' ')
-    .map((part) => part.charAt(0).toUpperCase())
-    .slice(0, 2)
-    .join('');
+  const user = session.user;
 
   return (
-    <Box sx={{ py: 4, px: 2, maxWidth: 720, mx: 'auto' }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Paper
-        variant="outlined"
-        sx={{
-          borderRadius: 3,
-          borderColor: '#e5e5e5',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.04)',
-          p: { xs: 2.5, md: 3 },
-        }}
-      >
-        <Typography
-          variant="overline"
-          sx={{ color: '#a3a3a3', letterSpacing: '0.16em', mb: 1, display: 'block' }}
-        >
-          Profile
-        </Typography>
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: 2.5,
-            mb: 2.5,
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 64,
-              height: 64,
-              bgcolor: '#0a0a0a',
-              fontWeight: 600,
-              fontSize: '1.25rem',
+    <Box sx={{ py: 4, px: 2, maxWidth: 800, mx: 'auto' }}>
+      <Paper sx={{ p: 4, borderRadius: 3, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}>
+        <Box display="flex" alignItems="center" gap={3} sx={{ mb: 4 }}>
+          <Avatar 
+            sx={{ 
+                width: 90, 
+                height: 90, 
+                bgcolor: 'primary.main', 
+                fontSize: '2rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
             }}
           >
-            {initials}
+            {user.name?.charAt(0) || 'U'}
           </Avatar>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>
-              {profile?.name || session?.user?.name || 'Your account'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#737373', mb: 0.25 }}>
-              {profile?.email || session?.user?.email}
-            </Typography>
-            {profile?.phone && (
-              <Typography variant="body2" sx={{ color: '#737373', mb: 0.25 }}>
-                {profile.phone}
-              </Typography>
-            )}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 0.75 }}>
-              {joined && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 999,
-                    bgcolor: '#f5f5f5',
-                    color: '#737373',
-                  }}
-                >
-                  Joined {joined}
-                </Typography>
-              )}
-              {profile?.role && (
-                <Typography
-                  variant="caption"
-                  sx={{
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 999,
-                    bgcolor: '#f5f5f5',
-                    color: '#737373',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {profile.role}
-                </Typography>
-              )}
+            <Typography variant="h4" fontWeight="bold">{user.name}</Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>{user.email}</Typography>
+            <Box sx={{ mt: 1 }}>
+                <Chip 
+                    label={user.role || 'Guest'} 
+                    color="primary" 
+                    size="small" 
+                    sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }} 
+                />
             </Box>
           </Box>
         </Box>
 
-        <Divider sx={{ borderColor: '#e5e5e5', mb: 2 }} />
+        <Divider sx={{ mb: 3 }} />
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-          <Box>
-            <Typography variant="caption" sx={{ color: '#a3a3a3', letterSpacing: '0.08em' }}>
-              EMAIL
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#0a0a0a' }}>
-              {profile?.email || session?.user?.email}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: '#a3a3a3', letterSpacing: '0.08em' }}>
-              PHONE
-            </Typography>
-            <Typography variant="body2" sx={{ color: profile?.phone ? '#0a0a0a' : '#a3a3a3' }}>
-              {profile?.phone || 'Not added'}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="caption" sx={{ color: '#a3a3a3', letterSpacing: '0.08em' }}>
-              ROLE
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#0a0a0a', textTransform: 'capitalize' }}>
-              {profile?.role || 'user'}
-            </Typography>
-          </Box>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Account Details</Typography>
+        <List sx={{ bgcolor: '#fbfbfb', borderRadius: 2, p: 2 }}>
+          <ListItem sx={{ px: 0 }}>
+            <ListItemText 
+                primary="Account Type" 
+                secondary={user.role === 'SuperAdmin' ? 'Administrator' : user.role === 'ResortOwner' ? 'Resort Manager' : 'Guest'} 
+            />
+          </ListItem>
+          <Divider component="li" />
+          <ListItem sx={{ px: 0 }}>
+            <ListItemText 
+                primary="Email Address" 
+                secondary={user.email} 
+            />
+          </ListItem>
+        </List>
+
+        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+            <Button variant="outlined" onClick={() => router.push('/bookings')}>View My Bookings</Button>
+            <Button variant="contained" color="error" onClick={() => signOut()}>Sign Out</Button>
         </Box>
       </Paper>
     </Box>
   );
 }
+
+import { Chip } from '@mui/material';

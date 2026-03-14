@@ -1,29 +1,19 @@
-import NextAuth from 'next-auth';
+import NextAuth, { DefaultSession } from 'next-auth';
 
 declare module 'next-auth' {
   interface Session {
     accessToken?: string;
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: 'Guest' | 'Admin' | 'SuperAdmin' | 'ResortOwner' | string;
+    } & DefaultSession['user'];
   }
 
   interface JWT {
     accessToken?: string;
-  }
-}
-
-declare module 'next-auth' {
-  interface Session {
-    accessToken?: string;
-    user?: {
-      id?: string;
-      name?: string;
-      email?: string;
-      role?: string;
-    };
-  }
-
-  interface JWT {
-    accessToken?: string;
-    role?: string;
+    role?: 'Guest' | 'Admin' | 'SuperAdmin' | 'ResortOwner' | string;
     id?: string;
     name?: string;
     email?: string;
