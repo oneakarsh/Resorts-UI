@@ -82,7 +82,7 @@ export const bookingAPI = {
   },
   getAllAdmin: (token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/bookings/admin/all', config);
+    return api.get('/admin/bookings', config);
   },
 };
 
