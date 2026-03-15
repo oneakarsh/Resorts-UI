@@ -79,53 +79,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Footer (Simplified for now) */}
-      <footer className="bg-bg-offset border-t border-border-light py-10 mt-20">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-            <div>
-              <h4 className="font-bold text-[14px] text-text-main mb-4">Support</h4>
-              <ul className="flex flex-col gap-3 text-[14px] text-text-muted">
-                <li className="hover:underline cursor-pointer">Help Center</li>
-                <li className="hover:underline cursor-pointer">AirCover</li>
-                <li className="hover:underline cursor-pointer">Supporting people with disabilities</li>
-                <li className="hover:underline cursor-pointer">Cancellation options</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[14px] text-text-main mb-4">Community</h4>
-              <ul className="flex flex-col gap-3 text-[14px] text-text-muted">
-                <li className="hover:underline cursor-pointer">Airbnb.org: disaster relief housing</li>
-                <li className="hover:underline cursor-pointer">Combating discrimination</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[14px] text-text-main mb-4">Hosting</h4>
-              <ul className="flex flex-col gap-3 text-[14px] text-text-muted">
-                <li className="hover:underline cursor-pointer">Airbnb your home</li>
-                <li className="hover:underline cursor-pointer">AirCover for Hosts</li>
-                <li className="hover:underline cursor-pointer">Hosting resources</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[14px] text-text-main mb-4">Airbnb</h4>
-              <ul className="flex flex-col gap-3 text-[14px] text-text-muted">
-                <li className="hover:underline cursor-pointer">Newsroom</li>
-                <li className="hover:underline cursor-pointer">Learn about new features</li>
-                <li className="hover:underline cursor-pointer">Careers</li>
-              </ul>
-            </div>
-          </div>
-          <div className="pt-6 border-t border-border-main flex flex-col md:flex-row justify-between items-center gap-4 text-[14px] text-text-main">
-            <div className="flex flex-wrap gap-4">
-              <span>© 2026 resortss.in, Inc.</span>
-              <span className="hover:underline cursor-pointer">Privacy</span>
-              <span className="hover:underline cursor-pointer">Terms</span>
-              <span className="hover:underline cursor-pointer">Sitemap</span>
-            </div>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

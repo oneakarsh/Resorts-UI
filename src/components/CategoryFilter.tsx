@@ -18,13 +18,8 @@ const categories = [
   { label: 'Amazing pools', icon: Pool },
   { label: 'Beachfront', icon: BeachAccess },
   { label: 'Mountains', icon: Terrain },
-  { label: 'Cabins', icon: Cabin },
   { label: 'Luxury', icon: Villa },
-  { label: 'Surfing', icon: Surfing },
-  { label: 'Forests', icon: Forest },
-  { label: 'Countryside', icon: NaturePeople },
   { label: 'Trending', icon: LocalFireDepartment },
-  { label: 'Arctic', icon: AcUnit },
 ];
 
 interface CategoryFilterProps {

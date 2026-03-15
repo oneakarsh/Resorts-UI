@@ -13,36 +13,29 @@ import {
 export default function Footer() {
   const sections = [
     {
-      title: 'Support',
+      title: 'Support & Legal',
       links: [
-        { label: 'Help Center', href: '#' },
-        { label: 'AirCover', href: '#' },
-        { label: 'Anti-discrimination', href: '#' },
-        { label: 'Disability support', href: '#' },
-        { label: 'Cancellation options', href: '#' },
-        { label: 'Report neighborhood concern', href: '#' },
+        { label: 'Contact Us', href: '/contact' },
+        { label: 'Privacy Policy', href: '/privacy' },
+        { label: 'Terms of Service', href: '/terms' },
+        { label: 'Help Center', href: '/help' },
       ]
     },
     {
-      title: 'Hosting',
+      title: 'Explore',
+      links: [
+        { label: 'Trending Resorts', href: '/?category=Trending' },
+        { label: 'Our Story', href: '/about' },
+        { label: 'Destinations', href: '/destinations' },
+        { label: 'Special Offers', href: '/offers' },
+      ]
+    },
+    {
+      title: 'Partner',
       links: [
         { label: 'List your resort', href: '/dashboard/resorts/new' },
-        { label: 'AirCover for Hosts', href: '#' },
-        { label: 'Hosting resources', href: '#' },
-        { label: 'Community forum', href: '#' },
-        { label: 'Hosting responsibly', href: '#' },
-        { label: 'Join a free Hosting class', href: '#' },
-      ]
-    },
-    {
-      title: 'Scaper',
-      links: [
-        { label: 'Newsroom', href: '#' },
-        { label: 'New features', href: '#' },
-        { label: 'Careers', href: '#' },
-        { label: 'Investors', href: '#' },
-        { label: 'Gift cards', href: '#' },
-        { label: 'Resortss.in emergency stays', href: '#' },
+        { label: 'Partner Resources', href: '/partner' },
+        { label: 'Community Forum', href: '/community' },
       ]
     }
   ];

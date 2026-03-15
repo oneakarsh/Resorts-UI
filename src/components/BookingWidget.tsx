@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Star, KeyboardArrowDown } from '@mui/icons-material';
 import { formatRupee } from '@/lib/formatRupee';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface BookingWidgetProps {
   price: number;
@@ -15,11 +17,22 @@ export default function BookingWidget({ price, rating, reviewsCount = 124, maxGu
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
+  const { data: session } = useSession();
+  const router = useRouter();
   
   const nights = 5; // Placeholder
   const baseTotal = price * nights;
   const serviceFee = Math.round(baseTotal * 0.12);
   const total = baseTotal + serviceFee;
+
+  const handleReserve = () => {
+    if (!session) {
+      router.push('/login?callbackUrl=' + window.location.pathname);
+      return;
+    }
+    // Proceed with booking logic here
+    alert('Booking would proceed here!');
+  };
 
   return (
     <div className="sticky top-28 bg-white border border-border-light rounded-2xl p-6 shadow-xl w-full max-w-[380px] ml-auto">
@@ -64,7 +77,10 @@ export default function BookingWidget({ price, rating, reviewsCount = 124, maxGu
         </div>
       </div>
 
-      <button className="w-full bg-brand text-white py-3.5 rounded-lg font-bold text-[16px] mb-4 hover:bg-brand-dark transition-colors">
+      <button 
+        onClick={handleReserve}
+        className="w-full bg-brand text-white py-3.5 rounded-lg font-bold text-[16px] mb-4 hover:bg-brand-dark transition-colors"
+      >
         Reserve
       </button>
 
