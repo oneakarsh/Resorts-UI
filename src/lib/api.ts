@@ -21,115 +21,63 @@ api.interceptors.request.use((config) => {
 
 // Auth APIs
 export const authAPI = {
-  register: (data: { name: string; email: string; password: string; confirmPassword: string; phone: string }) =>
-    api.post('/auth/register', data),
-  login: (data: { email: string; password: string }) =>
-    api.post('/auth/login', data),
-  profile: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/auth/profile', config);
-  },
+  register: (data: any) => api.post('/auth/register', data),
+  login: (data: any) => api.post('/auth/login', data),
+  refresh: (token?: string) => api.post('/auth/refresh', {}, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  forgotPassword: (data: { email: string }) => api.post('/auth/forgot-password', data),
+  resetPassword: (token: string, data: { password: string }) => api.post(`/auth/reset-password/${token}`, data),
+  profile: (token?: string) => api.get('/auth/profile', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  createResortOwner: (data: any, token?: string) => api.post('/auth/resort-owner/create', data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  createResortManager: (data: any, token?: string) => api.post('/auth/resort-manager/create', data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getResortOwners: (token?: string) => api.get('/auth/resort-owner/users', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
 };
 
 // Resort APIs
 export const resortAPI = {
-  getAll: (params?: Record<string, any>, token?: string) => {
-    const config = {
-      ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
-      params: params || {},
-    };
-    return api.get('/resorts', config);
-  },
-  getById: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get(`/resorts/${id}`, config);
-  },
-  create: (data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.post('/resorts', data, config);
-  },
-  update: (id: string, data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.put(`/resorts/${id}`, data, config);
-  },
-  delete: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.delete(`/resorts/${id}`, config);
-  },
+  getAll: (params?: Record<string, any>, token?: string) => api.get('/resorts', { ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}), params: params || {} }),
+  getById: (id: string, token?: string) => api.get(`/resorts/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  create: (data: any, token?: string) => api.post('/resorts', data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  update: (id: string, data: any, token?: string) => api.put(`/resorts/${id}`, data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  delete: (id: string, token?: string) => api.delete(`/resorts/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
 };
 
 // Booking APIs
 export const bookingAPI = {
-  create: (data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.post('/bookings', data, config);
-  },
-  getAll: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/bookings', config);
-  },
-  getById: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get(`/bookings/${id}`, config);
-  },
-  updateStatus: (id: string, status: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.patch(`/bookings/${id}/status`, { status }, config);
-  },
-  cancel: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.patch(`/bookings/${id}/cancel`, {}, config);
-  },
-  getAllAdmin: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/admin/bookings', config);
-  },
+  create: (data: any, token?: string) => api.post('/bookings', data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getAll: (token?: string) => api.get('/bookings', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getById: (id: string, token?: string) => api.get(`/bookings/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  cancel: (id: string, token?: string) => api.patch(`/bookings/${id}/cancel`, {}, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getAllOwner: (token?: string) => api.get('/bookings/resort-owner/all', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  updateStatus: (id: string, status: string, token?: string) => api.patch(`/bookings/${id}/status`, { status }, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getAllAdmin: (token?: string) => api.get('/admin/bookings', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
 };
 
-// User APIs (for super admin)
-export const userAPI = {
-  getAll: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/users', config);
-  },
-  getPropertyOwners: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/auth/property-owner/users', config);
-  },
-  create: (data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.post('/users', data, config);
-  },
-  update: (id: string, data: Record<string, unknown>, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.put(`/users/${id}`, data, config);
-  },
-  delete: (id: string, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.delete(`/users/${id}`, config);
-  },
-};
-
-// Dashboard APIs
-export const dashboardAPI = {
-  getSuperAdminStats: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/dashboard/super-admin', config);
-  },
-  getPropertyOwnerStats: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/dashboard/property-owner', config);
-  },
+// Management APIs
+export const managementAPI = {
+  getResorts: (token?: string) => api.get('/management/resorts', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getInventory: (resortId: string, token?: string) => api.get(`/management/resorts/${resortId}/inventory`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getBookings: (token?: string) => api.get('/management/bookings', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
 };
 
 // Chat APIs
 export const chatAPI = {
-  getInbox: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.get('/chat/inbox', config);
-  },
-  sendMessage: (data: { receiverId: string; message: string; resortId?: string }, token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    return api.post('/chat/send', data, config);
-  },
+  getInbox: (token?: string) => api.get('/chat/inbox', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getConversations: (userId: string, token?: string) => api.get(`/chat/conversations/${userId}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  sendMessage: (data: { to: string; content: string; bookingId?: string }, token?: string) => api.post('/chat/send', data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+};
+
+// Dashboard APIs
+export const dashboardAPI = {
+  getSuperAdminStats: (token?: string) => api.get('/dashboard/super-admin', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getPropertyOwnerStats: (token?: string) => api.get('/dashboard/property-owner', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+};
+
+// User APIs (Super Admin / Resort Owner)
+export const userAPI = {
+  getAll: (token?: string) => api.get('/users', token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  create: (data: any, token?: string) => api.post('/users', data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getById: (id: string, token?: string) => api.get(`/users/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  update: (id: string, data: any, token?: string) => api.put(`/users/${id}`, data, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  delete: (id: string, token?: string) => api.delete(`/users/${id}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  getPropertyOwners: (token?: string) => api.get('/auth/resort-owner/users', token ? { headers: { Authorization: `Bearer ${token}` } } : {}), // Kept for backward compat if needed
 };

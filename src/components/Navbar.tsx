@@ -88,14 +88,16 @@ export default function Navbar() {
       {/* Import GlobalSearch if not already done */}
       {/* (Adding it here for clarity, but it should be imported at top) */}
 
-      {/* User Menu Integration */}
       {anchorEl && (
         <UserMenu
           user={{ name: session?.user?.name || '', role: (session?.user as any)?.role || 'user' }}
           anchorEl={anchorEl}
+          isAuthenticated={!!session}
           onMenuOpen={() => {}} // Not needed for custom trigger
           onMenuClose={() => setAnchorEl(null)}
           onLogout={handleLogout}
+          onLogin={() => { setAnchorEl(null); setOpenLoginDialog(true); }}
+          onRegister={() => { setAnchorEl(null); setOpenRegisterDialog(true); }}
           onNavigate={(path) => {
             setAnchorEl(null);
             router.push(path);

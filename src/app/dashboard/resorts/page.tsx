@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { resortAPI } from '@/lib/api';
+import { resortAPI, managementAPI } from '@/lib/api';
 import { formatRupee } from '@/lib/formatRupee';
 import { 
   Edit, 
   Delete, 
   Visibility,
   Add,
-  HomeWork
+  HomeWork,
+  Inventory
 } from '@mui/icons-material';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress, Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -19,6 +21,11 @@ export default function ManageResorts() {
   const { data: session } = useSession();
   const [resorts, setResorts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Inventory Modal State
+  const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryData, setInventoryData] = useState<any>(null);
 
   useEffect(() => {
     const fetchResorts = async () => {
@@ -50,6 +57,20 @@ export default function ManageResorts() {
       setResorts(resorts.filter(r => (r.id || r._id) !== id));
     } catch (error) {
       alert('Failed to delete resort');
+    }
+  };
+
+  const handleViewInventory = async (id: string) => {
+    try {
+      setInventoryLoading(true);
+      setInventoryModalOpen(true);
+      const res = await managementAPI.getInventory(id, session?.accessToken);
+      setInventoryData(res.data?.data || res.data);
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error);
+      alert('Failed to fetch inventory for this resort.');
+    } finally {
+      setInventoryLoading(false);
     }
   };
 
@@ -122,6 +143,13 @@ export default function ManageResorts() {
                         <Edit sx={{ fontSize: 20 }} />
                       </Link>
                       <button 
+                        onClick={() => handleViewInventory(id)}
+                        className="p-2 text-text-muted hover:text-purple-600 transition-colors inline-block"
+                        title="View Inventory"
+                      >
+                        <Inventory sx={{ fontSize: 20 }} />
+                      </button>
+                      <button 
                         onClick={() => handleDelete(id)}
                         className="p-2 text-text-muted hover:text-brand transition-colors"
                       >
@@ -151,6 +179,57 @@ export default function ManageResorts() {
           </Link>
         </div>
       )}
+
+      {/* Inventory Dialog */}
+      <Dialog 
+        open={inventoryModalOpen} 
+        onClose={() => setInventoryModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ style: { borderRadius: '16px' } }}
+      >
+        <DialogTitle className="flex justify-between items-center border-b border-border-light pb-4">
+          <span className="font-bold text-[20px] text-text-main">Property Inventory</span>
+          <IconButton onClick={() => setInventoryModalOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent className="py-6">
+          {inventoryLoading ? (
+            <div className="flex justify-center flex-col items-center py-10 gap-4">
+              <CircularProgress sx={{ color: '#FF385C' }} />
+              <p className="text-text-muted">Loading inventory data...</p>
+            </div>
+          ) : inventoryData ? (
+            <div className="space-y-6 mt-4">
+               {/* Just rendering arbitrary detailed inventory structures */}
+               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                 <div className="bg-bg-offset p-4 rounded-xl">
+                    <p className="text-[12px] text-text-muted uppercase font-bold tracking-wider">Total capacity</p>
+                    <p className="text-[24px] font-bold mt-1 text-text-main">{inventoryData.capacity || 'N/A'}</p>
+                 </div>
+                 <div className="bg-bg-offset p-4 rounded-xl">
+                    <p className="text-[12px] text-text-muted uppercase font-bold tracking-wider">Rooms Available</p>
+                    <p className="text-[24px] font-bold mt-1 text-green-600">{inventoryData.availableRooms || 'N/A'}</p>
+                 </div>
+                 <div className="bg-bg-offset p-4 rounded-xl">
+                    <p className="text-[12px] text-text-muted uppercase font-bold tracking-wider">Rooms Booked</p>
+                    <p className="text-[24px] font-bold mt-1 text-brand">{inventoryData.bookedRooms || 'N/A'}</p>
+                 </div>
+               </div>
+               
+               <h3 className="text-[18px] font-bold text-text-main">Current Stock & Amenities Status</h3>
+               <div className="p-6 bg-white border border-border-light rounded-2xl shadow-sm">
+                  <pre className="text-[14px] text-text-muted overflow-x-auto whitespace-pre-wrap">
+                    {JSON.stringify(inventoryData, null, 2)}
+                  </pre>
+               </div>
+            </div>
+          ) : (
+            <div className="py-10 text-center text-text-muted">No inventory data found.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

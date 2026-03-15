@@ -7,20 +7,33 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 interface BookingWidgetProps {
+  resortId: string;
+  resortName: string;
+  resortLocation: string;
+  resortImage: string;
   price: number;
   rating: number;
   reviewsCount?: number;
   maxGuests: number;
 }
 
-export default function BookingWidget({ price, rating, reviewsCount = 124, maxGuests }: BookingWidgetProps) {
+export default function BookingWidget({ 
+  resortId, resortName, resortLocation, resortImage, price, rating, reviewsCount = 124, maxGuests 
+}: BookingWidgetProps) {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
   const { data: session } = useSession();
   const router = useRouter();
   
-  const nights = 5; // Placeholder
+  // Calculate nights
+  const getDaysDiff = (start: string, end: string) => {
+    if (!start || !end) return 0;
+    const diffTime = Math.abs(new Date(end).getTime() - new Date(start).getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+  
+  const nights = getDaysDiff(checkIn, checkOut) || 1;
   const baseTotal = price * nights;
   const serviceFee = Math.round(baseTotal * 0.12);
   const total = baseTotal + serviceFee;
@@ -30,8 +43,32 @@ export default function BookingWidget({ price, rating, reviewsCount = 124, maxGu
       router.push('/login?callbackUrl=' + window.location.pathname);
       return;
     }
-    // Proceed with booking logic here
-    alert('Booking would proceed here!');
+    if (!checkIn || !checkOut) {
+      alert('Please select check-in and check-out dates');
+      return;
+    }
+    if (new Date(checkIn) >= new Date(checkOut)) {
+      alert('Check-out must be after check-in');
+      return;
+    }
+    if (guests > maxGuests) {
+      alert(`Maximum ${maxGuests} guests allowed`);
+      return;
+    }
+
+    const payload = {
+      resortId,
+      resortName,
+      resortLocation,
+      resortImage,
+      checkInDate: new Date(checkIn).toISOString(),
+      checkOutDate: new Date(checkOut).toISOString(),
+      numberOfGuests: guests,
+      totalPrice: total,
+      selectedAmenities: [],
+    };
+
+    router.push(`/dummy-payment?data=${encodeURIComponent(JSON.stringify(payload))}`);
   };
 
   return (
@@ -51,27 +88,38 @@ export default function BookingWidget({ price, rating, reviewsCount = 124, maxGu
 
       <div className="border border-border-main rounded-xl overflow-hidden mb-4">
         <div className="flex border-b border-border-main">
-          <div className="flex-1 p-3 border-r border-border-main hover:bg-bg-offset transition-colors cursor-pointer">
+          <div className="flex-1 p-3 border-r border-border-main hover:bg-bg-offset transition-colors cursor-pointer relative overflow-hidden">
             <label className="block text-[10px] font-black uppercase text-text-main">Check-in</label>
             <input 
-              type="text" 
-              placeholder="Add date" 
-              className="bg-transparent border-none outline-none text-[14px] text-text-muted w-full"
+              type="date"
+              value={checkIn}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setCheckIn(e.target.value)}
+              className="bg-transparent border-none outline-none text-[14px] text-text-main w-full"
             />
           </div>
-          <div className="flex-1 p-3 hover:bg-bg-offset transition-colors cursor-pointer">
+          <div className="flex-1 p-3 hover:bg-bg-offset transition-colors cursor-pointer relative overflow-hidden">
             <label className="block text-[10px] font-black uppercase text-text-main">Check-out</label>
             <input 
-              type="text" 
-              placeholder="Add date" 
-              className="bg-transparent border-none outline-none text-[14px] text-text-muted w-full"
+              type="date" 
+              value={checkOut}
+              min={checkIn || new Date().toISOString().split('T')[0]}
+              onChange={(e) => setCheckOut(e.target.value)}
+              className="bg-transparent border-none outline-none text-[14px] text-text-main w-full"
             />
           </div>
         </div>
         <div className="p-3 flex justify-between items-center hover:bg-bg-offset transition-colors cursor-pointer relative">
-          <div>
+          <div className="flex-1">
             <label className="block text-[10px] font-black uppercase text-text-main">Guests</label>
-            <div className="text-[14px] text-text-main">{guests} guest{guests > 1 ? 's' : ''}</div>
+            <input 
+              type="number"
+              min={1}
+              max={maxGuests}
+              value={guests}
+              onChange={(e) => setGuests(parseInt(e.target.value))}
+              className="bg-transparent border-none outline-none text-[14px] text-text-main w-full"
+            />
           </div>
           <KeyboardArrowDown sx={{ fontSize: 24 }} />
         </div>

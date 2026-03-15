@@ -145,6 +145,10 @@ export default function ResortDetailPage() {
         {/* Right Column - Booking Widget */}
         <div className="relative">
           <BookingWidget 
+            resortId={resort._id || resort.id || ''}
+            resortName={resort.name}
+            resortLocation={resort.location}
+            resortImage={images[0]}
             price={resort.pricePerNight} 
             rating={resort.rating || 4.9} 
             maxGuests={resort.maxGuests}

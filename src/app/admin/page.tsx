@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { resortAPI, bookingAPI, userAPI, dashboardAPI } from '@/lib/api';
+import { resortAPI, bookingAPI, userAPI, dashboardAPI, authAPI } from '@/lib/api';
 import { formatRupee } from '@/lib/formatRupee';
 import { 
   Hotel, 
@@ -23,8 +23,16 @@ import { useRouter } from 'next/navigation';
 import dayjs from 'dayjs';
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState<string>('overview');
   const [loading, setLoading] = useState(true);
+  
+  // Create Partner State
+  const [showCreatePartner, setShowCreatePartner] = useState(false);
+  const [partnerLoading, setPartnerLoading] = useState(false);
+  const [partnerForm, setPartnerForm] = useState({
+    name: '', email: '', password: '', phone: '', role: 'resort_owner'
+  });
+
   const [data, setData] = useState({
     resorts: [] as any[],
     bookings: [] as any[],
@@ -75,6 +83,30 @@ export default function AdminDashboard() {
       </div>
     );
   }
+
+  const handleCreatePartner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setPartnerLoading(true);
+      const token = session?.accessToken as string;
+      if (partnerForm.role === 'resort_owner') {
+        await authAPI.createResortOwner(partnerForm, token);
+      } else {
+        await authAPI.createResortManager(partnerForm, token);
+      }
+      setShowCreatePartner(false);
+      setPartnerForm({ name: '', email: '', password: '', phone: '', role: 'resort_owner' });
+      // Refresh users list
+      const usersRes = await userAPI.getPropertyOwners(token);
+      setData(prev => ({ ...prev, users: usersRes.data?.data || usersRes.data || [] }));
+      alert('Partner created successfully');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create partner');
+    } finally {
+      setPartnerLoading(false);
+    }
+  };
 
   const statsCards = [
     { title: 'Total Revenue', value: formatRupee(data.stats?.totalRevenue || 0), icon: <AccountBalanceWallet className="text-purple-600" />, color: 'bg-purple-50' },
@@ -252,12 +284,60 @@ export default function AdminDashboard() {
       )}
 
       {tab === 'users' && (
-        <div className="bg-white border border-border-light rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-border-light">
-             <h2 className="text-[18px] font-bold text-text-main">Partner Management</h2>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+             <h2 className="text-[20px] font-bold text-text-main">Partner Management</h2>
+             <button 
+               onClick={() => setShowCreatePartner(!showCreatePartner)}
+               className="bg-brand text-white px-5 py-2.5 rounded-xl text-[14px] font-bold hover:bg-brand-dark transition-colors"
+             >
+               {showCreatePartner ? 'Cancel' : '+ Create Partner'}
+             </button>
           </div>
-          <table className="w-full text-left">
-            <thead className="bg-bg-offset text-text-muted text-[13px] uppercase tracking-wider font-bold">
+
+          {showCreatePartner && (
+            <div className="bg-white border border-border-light rounded-2xl p-6 shadow-sm">
+              <h3 className="text-[18px] font-bold text-text-main mb-4">Add New Partner</h3>
+              <form onSubmit={handleCreatePartner} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input 
+                  type="text" required placeholder="Full Name"
+                  value={partnerForm.name} onChange={e => setPartnerForm({...partnerForm, name: e.target.value})}
+                  className="w-full border border-border-main p-3 rounded-xl outline-none"
+                />
+                <input 
+                  type="email" required placeholder="Email Address"
+                  value={partnerForm.email} onChange={e => setPartnerForm({...partnerForm, email: e.target.value})}
+                  className="w-full border border-border-main p-3 rounded-xl outline-none"
+                />
+                <input 
+                  type="password" required placeholder="Password"
+                  value={partnerForm.password} onChange={e => setPartnerForm({...partnerForm, password: e.target.value})}
+                  className="w-full border border-border-main p-3 rounded-xl outline-none"
+                />
+                <input 
+                  type="tel" required placeholder="Phone Number"
+                  value={partnerForm.phone} onChange={e => setPartnerForm({...partnerForm, phone: e.target.value})}
+                  className="w-full border border-border-main p-3 rounded-xl outline-none"
+                />
+                <select 
+                  value={partnerForm.role} onChange={e => setPartnerForm({...partnerForm, role: e.target.value})}
+                  className="w-full border border-border-main p-3 rounded-xl outline-none bg-white md:col-span-2"
+                >
+                  <option value="resort_owner">Resort Owner</option>
+                  <option value="resort_manager">Resort Manager</option>
+                </select>
+                <div className="md:col-span-2 flex justify-end">
+                  <button type="submit" disabled={partnerLoading} className="bg-text-main text-white px-8 py-3 rounded-xl font-bold disabled:opacity-50 hover:bg-black transition-colors">
+                    {partnerLoading ? 'Creating...' : 'Submit Partner'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          <div className="bg-white border border-border-light rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-left">
+              <thead className="bg-bg-offset text-text-muted text-[13px] uppercase tracking-wider font-bold">
               <tr>
                 <th className="px-6 py-4">Partner</th>
                 <th className="px-6 py-4">Email</th>
@@ -282,6 +362,7 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
 

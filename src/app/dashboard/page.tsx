@@ -146,7 +146,7 @@ export default function OwnerDashboard() {
               <h4 className="font-bold text-text-main group-hover:text-brand">Edit profile</h4>
               <p className="text-[12px] text-text-muted">Update your owner details</p>
             </Link>
-            <Link href="/chat" className="p-4 bg-bg-offset rounded-xl hover:bg-white border border-transparent hover:border-border-main transition-all group">
+            <Link href="/messages" className="p-4 bg-bg-offset rounded-xl hover:bg-white border border-transparent hover:border-border-main transition-all group">
               <h4 className="font-bold text-text-main group-hover:text-brand">Messages</h4>
               <p className="text-[12px] text-text-muted">Talk to your guests</p>
             </Link>

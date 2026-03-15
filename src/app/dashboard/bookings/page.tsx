@@ -36,8 +36,8 @@ export default function ManageBookings() {
       if (!session?.accessToken) return;
       try {
         setLoading(true);
-        // Assuming bookingAPI.getAll for an owner returns their properties' bookings
-        const response = await bookingAPI.getAll(session.accessToken);
+        // Assuming bookingAPI.getAllOwner returns their properties' bookings
+        const response = await bookingAPI.getAllOwner(session.accessToken);
         const data = response.data?.data || response.data;
         setBookings(Array.isArray(data) ? data : []);
       } catch (error) {
