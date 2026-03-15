@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest, context: any) {
   const { authorized, session, response } = await getSessionOrUnauthorized();
 
   if (!authorized) {
-    return response;
+    return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {

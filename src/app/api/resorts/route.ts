@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const { authorized, session, response } = await checkRole(['admin', 'superadmin']);
 
   if (!authorized) {
-    return response;
+    return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await req.json();

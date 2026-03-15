@@ -1,5 +1,5 @@
 // Role-based permissions mapping
-export type UserRole = 'user' | 'property_owner' | 'manager' | 'superadmin';
+export type UserRole = 'user' | 'property_owner' | 'manager' | 'admin' | 'superadmin';
 
 export type Permission =
   | 'view_resorts'
@@ -48,6 +48,23 @@ export const rolePermissions: Record<UserRole, Permission[]> = {
     'cancel_own_booking',
     'view_all_bookings',
     'update_booking_status',
+    'chat_access',
+  ],
+  admin: [
+    'view_resorts',
+    'create_resort',
+    'update_resort',
+    'delete_resort',
+    'create_booking',
+    'view_own_booking',
+    'cancel_own_booking',
+    'view_all_bookings',
+    'update_booking_status',
+    'manage_users',
+    'manage_admins',
+    'manage_property_owners',
+    'system_settings',
+    'view_analytics',
     'chat_access',
   ],
   superadmin: [
