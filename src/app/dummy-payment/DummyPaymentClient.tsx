@@ -2,30 +2,20 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Button, 
-  Divider, 
-  CircularProgress, 
-  Snackbar,
-  Stack,
-  TextField,
-  Grid
-} from '@mui/material';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { bookingAPI } from '@/lib/api';
 import { formatRupee } from '@/lib/formatRupee';
-// Oops, I saw the previous code used next/navigation
-import { useSearchParams as useNextSearchParams, useRouter as useNextRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Star, ChevronLeft, Lock } from '@mui/icons-material';
+import { CircularProgress } from '@mui/material';
+import dayjs from 'dayjs';
 
 export default function DummyPaymentClient() {
-  const searchParams = useNextSearchParams();
-  const router = useNextRouter();
-  const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { data: session } = useSession();
   const [bookingData, setBookingData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  const [snackOpen, setSnackOpen] = useState(false);
 
   useEffect(() => {
     const d = searchParams?.get('data');
@@ -39,12 +29,7 @@ export default function DummyPaymentClient() {
   }, [searchParams]);
 
   const handlePay = async () => {
-    if (status !== 'authenticated' || !session) {
-      router.push('/login');
-      return;
-    }
-    if (!bookingData) return;
-
+    if (!session?.accessToken || !bookingData) return;
     try {
       setLoading(true);
       const payload = {
@@ -56,13 +41,10 @@ export default function DummyPaymentClient() {
         totalPrice: bookingData.totalPrice,
       };
       await bookingAPI.create(payload, session.accessToken);
-      setSnackOpen(true);
-      setTimeout(() => {
-        router.push('/bookings');
-      }, 1200);
+      router.push('/bookings');
     } catch (err) {
-      console.error('Payment/booking failed', err);
-      alert('Payment failed');
+      console.error('Payment failed', err);
+      alert('Payment simulation failed');
     } finally {
       setLoading(false);
     }
@@ -70,159 +52,143 @@ export default function DummyPaymentClient() {
 
   if (!bookingData) {
     return (
-      <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircularProgress sx={{ color: '#0a0a0a' }} />
-      </Box>
+      <div className="min-h-screen flex items-center justify-center">
+        <CircularProgress sx={{ color: '#FF385C' }} />
+      </div>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: 'auto', px: 2, py: { xs: 4, md: 8 } }}>
-      <Grid container spacing={4}>
-        {/* Payment Form side */}
-        <Grid size={{ xs: 12, md: 7 }}>
-          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.04em' }}>Payment</Typography>
-          <Typography variant="body1" sx={{ color: '#737373', mb: 5 }}>All transactions are secure and encrypted.</Typography>
+    <main className="min-h-screen bg-white pb-20">
+      <div className="max-w-[1120px] mx-auto px-4 md:px-10 py-8 md:py-16">
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => router.back()} className="p-2 hover:bg-bg-offset rounded-full transition-colors">
+            <ChevronLeft sx={{ fontSize: 24 }} />
+          </button>
+          <h1 className="text-[32px] font-bold text-text-main">Confirm and pay</h1>
+        </div>
 
-          {/* Dummy Credit Card */}
-          <Paper 
-            elevation={0}
-            sx={{ 
-              p: 3, 
-              mb: 4, 
-              borderRadius: 4, 
-              background: 'linear-gradient(135deg, #0a0a0a 0%, #404040 100%)',
-              color: '#fff',
-              position: 'relative',
-              overflow: 'hidden',
-              minHeight: 200,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '0.1em' }}>PLATINUM</Typography>
-              <Box sx={{ width: 45, height: 30, bgcolor: 'rgba(255,255,255,0.2)', borderRadius: 1 }} />
-            </Box>
-            
-            <Typography variant="h5" sx={{ letterSpacing: '0.15em', my: 3, fontWeight: 500 }}>
-              ****  ****  ****  4242
-            </Typography>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+          {/* Left: Form */}
+          <div className="space-y-10">
+            <section className="space-y-6">
+              <h2 className="text-[22px] font-semibold text-text-main">Your trip</h2>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold text-text-main">Dates</h4>
+                  <p className="text-text-muted">{dayjs(bookingData.checkInDate).format('MMM D')} – {dayjs(bookingData.checkOutDate).format('MMM D, YYYY')}</p>
+                </div>
+                <button className="underline font-semibold h-fit hover:text-text-main transition-colors">Edit</button>
+              </div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold text-text-main">Guests</h4>
+                  <p className="text-text-muted">{bookingData.numberOfGuests} guest{bookingData.numberOfGuests > 1 ? 's' : ''}</p>
+                </div>
+                <button className="underline font-semibold h-fit hover:text-text-main transition-colors">Edit</button>
+              </div>
+            </section>
 
-            <Box sx={{ display: 'flex', gap: 4 }}>
-              <Box>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Card Holder</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>{session?.user?.name || 'GUEST USER'}</Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Expires</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>12/28</Typography>
-              </Box>
-            </Box>
-          </Paper>
+            <hr className="border-border-light" />
 
-          <Stack spacing={3}>
-            <TextField 
-              fullWidth 
-              label="Card Number" 
-              defaultValue="4242 4242 4242 4242"
-              disabled
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 8 }}>
-                <TextField 
-                  fullWidth 
-                  label="Name on Card" 
-                  defaultValue={session?.user?.name || ''}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </Grid>
-              <Grid size={{ xs: 4 }}>
-                <TextField 
-                  fullWidth 
-                  label="CVV" 
-                  defaultValue="***"
-                  disabled
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                />
-              </Grid>
-            </Grid>
-            <Button 
-              variant="contained" 
-              fullWidth 
-              size="large"
-              onClick={handlePay}
-              disabled={loading}
-              sx={{ 
-                bgcolor: '#0a0a0a', 
-                color: '#fff',
-                py: 2,
-                borderRadius: 3,
-                fontWeight: 700,
-                fontSize: '1rem',
-                '&:hover': { bgcolor: '#262626' }
-              }}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : `Pay ${formatRupee(bookingData.totalPrice)}`}
-            </Button>
-          </Stack>
-        </Grid>
-
-        {/* Summary side */}
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Paper 
-            variant="outlined" 
-            sx={{ 
-              p: 4, 
-              borderRadius: 6, 
-              borderColor: '#f0f0f0', 
-              bgcolor: '#fafafa',
-              position: 'sticky',
-              top: 100
-            }}
-          >
-            <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>Order Summary</Typography>
-            
-            <Stack spacing={2.5}>
-              <Box display="flex" justifyContent="space-between">
-                <Typography sx={{ color: '#737373' }}>Resort</Typography>
-                <Typography sx={{ fontWeight: 600 }}>{bookingData.resortName}</Typography>
-              </Box>
-              <Box display="flex" justifyContent="space-between">
-                <Typography sx={{ color: '#737373' }}>Stay</Typography>
-                <Typography sx={{ fontWeight: 600, textAlign: 'right' }}>
-                  {bookingData.checkInDate} <br /> to {bookingData.checkOutDate}
-                </Typography>
-              </Box>
-              <Box display="flex" justifyContent="space-between">
-                <Typography sx={{ color: '#737373' }}>Guests</Typography>
-                <Typography sx={{ fontWeight: 600 }}>{bookingData.numberOfGuests} Persons</Typography>
-              </Box>
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[22px] font-semibold text-text-main">Pay with</h2>
+                <div className="flex gap-2">
+                  <div className="w-8 h-5 bg-[#0070ba] rounded-sm" /> 
+                  <div className="w-8 h-5 bg-[#f79e1b] rounded-sm" />
+                </div>
+              </div>
               
-              <Divider sx={{ my: 1, borderColor: '#e5e5e5' }} />
-              
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>Total</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 900 }}>{formatRupee(bookingData.totalPrice)}</Typography>
-              </Box>
+              <div className="border border-border-main rounded-xl overflow-hidden">
+                <div className="p-4 border-b border-border-main bg-bg-offset flex justify-between items-center cursor-not-allowed">
+                  <span className="text-text-main font-medium">Credit or debit card</span>
+                  <div className="p-1.5 bg-text-main rounded-full">
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <input 
+                    type="text" 
+                    placeholder="Card number" 
+                    disabled 
+                    defaultValue="4242 4242 4242 4242"
+                    className="w-full border border-border-main rounded-lg p-3 outline-none text-text-muted cursor-not-allowed"
+                  />
+                  <div className="flex gap-4">
+                    <input type="text" placeholder="Exp: 12/28" disabled className="flex-1 border border-border-main rounded-lg p-3 outline-none text-text-muted cursor-not-allowed" />
+                    <input type="text" placeholder="CVV: ***" disabled className="flex-1 border border-border-main rounded-lg p-3 outline-none text-text-muted cursor-not-allowed" />
+                  </div>
+                </div>
+              </div>
+            </section>
 
-              <Typography variant="caption" sx={{ color: '#a3a3a3', textAlign: 'center', mt: 2 }}>
-                By clicking pay, you agree to our terms of service and booking policy.
-              </Typography>
-            </Stack>
-          </Paper>
-        </Grid>
-      </Grid>
+            <section className="pt-4">
+              <button 
+                onClick={handlePay}
+                disabled={loading}
+                className="w-full md:w-fit px-12 py-4 bg-brand text-white font-bold text-[18px] rounded-xl hover:bg-brand-dark transition-all disabled:opacity-50"
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Confirm and pay'}
+              </button>
+              <p className="mt-4 text-[12px] text-text-muted flex items-center gap-1">
+                <Lock sx={{ fontSize: 12 }} /> 
+                Secure payment simulation
+              </p>
+            </section>
+          </div>
 
-      <Snackbar 
-        open={snackOpen} 
-        message="Payment successful — booking confirmed" 
-        autoHideDuration={2000} 
-        onClose={() => setSnackOpen(false)} 
-      />
-    </Box>
+          {/* Right: Summary Card */}
+          <div className="relative">
+            <div className="sticky top-28 border border-border-light rounded-3xl p-6 shadow-trip overflow-hidden">
+              <div className="flex gap-4 mb-6">
+                <div className="relative w-32 aspect-square rounded-xl overflow-hidden bg-bg-offset">
+                  <Image 
+                    src={bookingData.resortImage || 'https://images.unsplash.com/photo-1540553016722-983e48a2cd10?auto=format&fit=crop&w=400&q=80'} 
+                    alt="Resort" 
+                    fill 
+                    className="object-cover" 
+                  />
+                </div>
+                <div className="flex flex-col justify-between py-1">
+                  <div>
+                    <span className="text-[12px] text-text-muted block">{bookingData.resortLocation || 'Property'}</span>
+                    <h3 className="text-[16px] font-semibold text-text-main leading-tight">{bookingData.resortName}</h3>
+                  </div>
+                  <div className="flex items-center gap-1 text-[12px]">
+                    <Star sx={{ fontSize: 12 }} />
+                    <span className="font-bold">4.95</span>
+                    <span className="text-text-muted">(124 reviews)</span>
+                  </div>
+                </div>
+              </div>
+
+              <hr className="border-border-light my-6" />
+
+              <h3 className="text-[18px] font-semibold text-text-main mb-6">Price details</h3>
+              <div className="space-y-4 text-[16px] text-text-main">
+                <div className="flex justify-between">
+                  <span className="underline">Total stay</span>
+                  <span>{formatRupee(bookingData.totalPrice)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="underline">Service Fee</span>
+                  <span>{formatRupee(0)}</span>
+                </div>
+                <hr className="border-border-light pt-2" />
+                <div className="flex justify-between font-bold text-[18px]">
+                  <span>Total (INR)</span>
+                  <span>{formatRupee(bookingData.totalPrice)}</span>
+                </div>
+              </div>
+
+              <div className="mt-8 bg-bg-offset p-4 rounded-xl text-[14px] text-text-muted">
+                Your reservation won't be confirmed until the host accepts your request. Simulation only.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
-

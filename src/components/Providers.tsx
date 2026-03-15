@@ -2,13 +2,16 @@
 
 import { SessionProvider } from 'next-auth/react';
 import MuiProvider from '@/components/MuiProvider';
+import { WishlistProvider } from '@/context/WishlistContext';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <MuiProvider>
-        {children}
-      </MuiProvider>
+      <WishlistProvider>
+        <MuiProvider>
+          {children}
+        </MuiProvider>
+      </WishlistProvider>
     </SessionProvider>
   );
 }

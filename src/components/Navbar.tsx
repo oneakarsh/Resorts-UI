@@ -1,256 +1,107 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Button,
-  Box,
-  IconButton,
-  Typography,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Container,
-  Stack,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Close as CloseIcon,
-  NotificationsNone as NotificationsIcon,
-  ChatBubbleOutline as ChatIcon,
-} from '@mui/icons-material';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { 
+  Search, 
+  Menu, 
+  AccountCircle, 
+  Language, 
+  NotificationsNone 
+} from '@mui/icons-material';
 import dynamic from 'next/dynamic';
 import UserMenu from './UserMenu';
+import GlobalSearch from './GlobalSearch';
 
 const LoginDialog = dynamic(() => import('./LoginDialog'), { ssr: false });
 const RegisterDialog = dynamic(() => import('./RegisterDialog'), { ssr: false });
 
 export default function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { data: session } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
-
   const [openLoginDialog, setOpenLoginDialog] = useState(false);
   const [openRegisterDialog, setOpenRegisterDialog] = useState(false);
+  
+  const { data: session } = useSession();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/' });
   };
 
-  const navLinks = [
-    { name: 'Discover', path: '/' },
-    { name: 'Resorts', path: '/resorts' },
-    { name: 'Experiences', path: '#experiences' },
-  ];
-
-  const handleMobileNav = (path: string) => {
-    setMobileMenuOpen(false);
-    router.push(path);
-  };
-
   return (
     <>
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          bgcolor: 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: 'blur(12px)',
-          color: '#0a0a0a',
-          borderBottom: '1px solid #f0f0f0',
-          zIndex: 1100,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ height: { xs: 70, md: 80 }, justifyContent: 'space-between' }}>
-            {/* Logo */}
-            <Link href="/" style={{ textDecoration: 'none' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    bgcolor: '#0a0a0a',
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 900,
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  S
-                </Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: '1.25rem',
-                    letterSpacing: '-0.03em',
-                    color: '#0a0a0a',
-                  }}
-                >
-                  Scaper
-                </Typography>
-              </Box>
-            </Link>
+      <nav className={`
+        sticky top-0 z-50 w-full transition-all duration-300
+        ${isScrolled ? 'bg-white border-b border-border-light py-4 shadow-sm' : 'bg-white py-5'}
+      `}>
+        <div className="max-w-[1280px] mx-auto px-4 md:px-10 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-1 group">
+            <div className="text-brand">
+              <span className="text-2xl font-black tracking-tighter">resortss.in</span>
+            </div>
+          </Link>
 
-            {/* Desktop Nav Links */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4 }}>
-              {navLinks.map((link) => (
-                <Link key={link.name} href={link.path} style={{ textDecoration: 'none' }}>
-                  <Typography
-                    sx={{
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      color: pathname === link.path ? '#0a0a0a' : '#737373',
-                      '&:hover': { color: '#0a0a0a' },
-                      transition: 'color 0.2s',
-                    }}
-                  >
-                    {link.name}
-                  </Typography>
-                </Link>
-              ))}
-            </Box>
+          <div className="hidden md:block flex-1 max-w-[400px]">
+            <GlobalSearch />
+          </div>
 
-            {/* Actions */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
-              {session ? (
-                <>
-                  <IconButton sx={{ color: '#737373', display: { xs: 'none', md: 'flex' } }}>
-                    <NotificationsIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton sx={{ color: '#737373', display: { xs: 'none', md: 'flex' } }}>
-                    <ChatIcon fontSize="small" />
-                  </IconButton>
-                  <UserMenu
-                    user={{ name: session.user?.name || '', role: (session.user as any)?.role || 'user' }}
-                    anchorEl={anchorEl}
-                    onMenuOpen={(e) => setAnchorEl(e.currentTarget)}
-                    onMenuClose={() => setAnchorEl(null)}
-                    onLogout={handleLogout}
-                    onNavigate={router.push}
-                  />
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={() => setOpenLoginDialog(true)}
-                    sx={{
-                      color: '#0a0a0a',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      px: 2,
-                      display: { xs: 'none', sm: 'inline-flex' },
-                    }}
-                  >
-                    Log in
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => setOpenRegisterDialog(true)}
-                    sx={{
-                      bgcolor: '#0a0a0a',
-                      color: '#fff',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      px: 3,
-                      borderRadius: 2.5,
-                      '&:hover': { bgcolor: '#262626' },
-                    }}
-                  >
-                    Sign up
-                  </Button>
-                </>
-              )}
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-1 mr-2 px-3 py-2 hover:bg-bg-offset rounded-full transition-all cursor-pointer">
+              <span className="text-[14px] font-semibold text-text-main">Airbnb your home</span>
+            </div>
+            
+            <div className="hidden sm:flex p-2 hover:bg-bg-offset rounded-full transition-all cursor-pointer">
+              <Language sx={{ fontSize: 20 }} className="text-text-main" />
+            </div>
 
-              {/* Mobile Menu Toggle */}
-              <IconButton
-                sx={{ display: { xs: 'flex', md: 'none' }, ml: 0.5 }}
-                onClick={() => setMobileMenuOpen(true)}
-              >
-                <MenuIcon />
-              </IconButton>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
+            <div 
+              onClick={(e) => setAnchorEl(e.currentTarget)}
+              className="flex items-center gap-3 p-2 border border-border-light rounded-full hover:shadow-md transition-all cursor-pointer"
+            >
+              <Menu sx={{ fontSize: 18 }} className="text-text-main ml-1" />
+              <div className="text-text-muted">
+                {(session?.user as any)?.image ? (
+                  <img src={(session?.user as any).image} alt="User" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <AccountCircle sx={{ fontSize: 32 }} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-      {/* Mobile Drawer */}
-      <Drawer
-        anchor="right"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        PaperProps={{
-          sx: { width: '100%', maxWidth: 300, bgcolor: '#fff' },
-        }}
-      >
-        <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800 }}>Scaper</Typography>
-            <IconButton onClick={() => setMobileMenuOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
+      {/* Import GlobalSearch if not already done */}
+      {/* (Adding it here for clarity, but it should be imported at top) */}
 
-          <List sx={{ flexGrow: 1 }}>
-            {navLinks.map((link) => (
-              <ListItem key={link.name} disablePadding sx={{ mb: 1 }}>
-                <Button
-                  fullWidth
-                  onClick={() => handleMobileNav(link.path)}
-                  sx={{
-                    justifyContent: 'flex-start',
-                    color: '#0a0a0a',
-                    fontSize: '1.25rem',
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    py: 1.5,
-                    px: 0,
-                  }}
-                >
-                  {link.name}
-                </Button>
-              </ListItem>
-            ))}
-          </List>
-
-          <Divider sx={{ my: 3 }} />
-
-          <Box sx={{ mt: 'auto' }}>
-            {!session && (
-              <Stack spacing={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => { setMobileMenuOpen(false); setOpenLoginDialog(true); }}
-                  sx={{ borderRadius: 2, py: 1.5, borderColor: '#e5e5e5', color: '#0a0a0a' }}
-                >
-                  Log in
-                </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={() => { setMobileMenuOpen(false); setOpenRegisterDialog(true); }}
-                  sx={{ borderRadius: 2, py: 1.5, bgcolor: '#0a0a0a' }}
-                >
-                  Sign up
-                </Button>
-              </Stack>
-            )}
-          </Box>
-        </Box>
-      </Drawer>
+      {/* User Menu Integration */}
+      {anchorEl && (
+        <UserMenu
+          user={{ name: session?.user?.name || '', role: (session?.user as any)?.role || 'user' }}
+          anchorEl={anchorEl}
+          onMenuOpen={() => {}} // Not needed for custom trigger
+          onMenuClose={() => setAnchorEl(null)}
+          onLogout={handleLogout}
+          onNavigate={(path) => {
+            setAnchorEl(null);
+            router.push(path);
+          }}
+        />
+      )}
 
       <LoginDialog
         open={openLoginDialog}
