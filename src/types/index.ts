@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: 'user' | 'admin' | 'superadmin';
+  role: 'user' | 'property_owner' | 'manager' | 'superadmin';
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;

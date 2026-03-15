@@ -12,7 +12,7 @@ export async function middleware(req: NextRequest) {
   console.log('[middleware] pathname=', pathname, ' token=', token);
 
   if (pathname.startsWith('/admin')) {
-    if (!token || (token.role !== 'admin' && token.role !== 'superadmin')) {
+    if (!token || (token.role !== 'admin' && token.role !== 'superadmin' && token.role !== 'property_owner' && token.role !== 'manager')) {
       // Show 404 for unauthorized access instead of redirecting to login
       return NextResponse.rewrite(new URL('/404', req.url));
     }

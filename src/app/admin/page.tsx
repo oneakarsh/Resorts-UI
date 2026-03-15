@@ -38,10 +38,11 @@ import {
   PersonAdd as PersonAddIcon,
   AdminPanelSettings as AdminIcon,
   Security as SecurityIcon,
+  ChatBubble as ChatIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { resortAPI, bookingAPI, userAPI } from '@/lib/api';
+import { resortAPI, bookingAPI, userAPI, dashboardAPI } from '@/lib/api';
 import { formatRupee } from '@/lib/formatRupee';
 import { Resort, Booking, User } from '@/types';
 
@@ -79,6 +80,7 @@ export default function AdminDashboard() {
     totalBookings: 0,
     pendingBookings: 0,
     confirmedBookings: 0,
+    totalRevenue: 0,
   });
 
   // Resort management state
@@ -103,7 +105,7 @@ export default function AdminDashboard() {
     name: '',
     email: '',
     phone: '',
-    role: 'admin' as 'admin' | 'superadmin',
+    role: 'property_owner' as 'property_owner' | 'manager' | 'superadmin',
     password: '',
   });
 
@@ -118,9 +120,10 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Check if user has admin or superadmin role
+    // Check if user has required roles
     const userRole = (session.user as any)?.role;
-    if (userRole !== 'admin' && userRole !== 'superadmin') {
+    const allowedRoles = ['admin', 'superadmin', 'property_owner', 'manager'];
+    if (!allowedRoles.includes(userRole)) {
       router.push('/');
       return;
     }
@@ -137,35 +140,57 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const promises = [
+      const promises: any[] = [
         resortAPI.getAll(session?.accessToken),
         bookingAPI.getAllAdmin(session?.accessToken),
       ];
 
-      // Fetch users only for superadmins
+      // Fetch specific dashboard stats
       if (currentUser?.role === 'superadmin') {
-        promises.push(userAPI.getAll(session?.accessToken));
+        promises.push(dashboardAPI.getSuperAdminStats(session?.accessToken));
+        promises.push(userAPI.getPropertyOwners(session?.accessToken));
+      } else if (currentUser?.role === 'property_owner' || currentUser?.role === 'manager') {
+        promises.push(dashboardAPI.getPropertyOwnerStats(session?.accessToken));
       }
 
-      const [resortsRes, bookingsRes, usersRes] = await Promise.all(promises);
-
+      const results = await Promise.all(promises);
+      
+      const resortsRes = results[0];
+      const bookingsRes = results[1];
+      
       const resortsData = resortsRes?.data?.data ?? resortsRes?.data ?? [];
       const bookingsData = bookingsRes?.data?.data ?? bookingsRes?.data ?? [];
-      const usersData = usersRes?.data?.data ?? usersRes?.data ?? [];
 
       setResorts(Array.isArray(resortsData) ? resortsData : []);
       setBookings(Array.isArray(bookingsData) ? bookingsData : []);
-      if (currentUser?.role === 'superadmin') {
-        setUsers(Array.isArray(usersData) ? usersData : []);
-      }
 
-      // Calculate stats
-      setStats({
-        totalResorts: resortsData.length || 0,
-        totalBookings: bookingsData.length || 0,
-        pendingBookings: bookingsData.filter((b: Booking) => b.status === 'pending').length || 0,
-        confirmedBookings: bookingsData.filter((b: Booking) => b.status === 'confirmed').length || 0,
-      });
+      if (currentUser?.role === 'superadmin') {
+        const statsRes = results[2];
+        const usersRes = results[3];
+        
+        const statsData = statsRes?.data?.data ?? statsRes?.data ?? {};
+        const usersData = usersRes?.data?.data ?? usersRes?.data ?? [];
+        
+        setUsers(Array.isArray(usersData) ? usersData : []);
+        setStats({
+          totalResorts: statsData.totalResorts || resortsData.length || 0,
+          totalBookings: statsData.totalBookings || bookingsData.length || 0,
+          pendingBookings: statsData.bookingsByStatus?.pending || 0,
+          confirmedBookings: statsData.bookingsByStatus?.confirmed || 0,
+          totalRevenue: statsData.totalRevenue || 0,
+        });
+      } else {
+        const statsRes = results[2];
+        const statsData = statsRes?.data?.data ?? statsRes?.data ?? {};
+        
+        setStats({
+          totalResorts: statsData.totalResorts || resortsData.length || 0,
+          totalBookings: statsData.totalBookings || bookingsData.length || 0,
+          pendingBookings: statsData.bookingsByStatus?.pending || 0,
+          confirmedBookings: statsData.bookingsByStatus?.confirmed || 0,
+          totalRevenue: statsData.totalRevenue || 0,
+        });
+      }
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
     } finally {
@@ -263,7 +288,7 @@ export default function AdminDashboard() {
         name: user.name,
         email: user.email,
         phone: user.phone ?? '',
-        role: user.role as 'admin' | 'superadmin',
+        role: user.role as 'property_owner' | 'manager' | 'superadmin',
         password: '', // Don't populate password for editing
       });
     } else {
@@ -272,7 +297,7 @@ export default function AdminDashboard() {
         name: '',
         email: '',
         phone: '',
-        role: 'admin',
+        role: 'property_owner',
         password: '',
       });
     }
@@ -342,8 +367,7 @@ export default function AdminDashboard() {
         </Typography>
 
       {/* Overview Stats */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
             <CardContent sx={{ py: 2 }}>
               <Box display="flex" alignItems="center" mb={0.5}>
@@ -354,7 +378,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
             <CardContent sx={{ py: 2 }}>
               <Box display="flex" alignItems="center" mb={0.5}>
@@ -365,7 +389,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
             <CardContent sx={{ py: 2 }}>
               <Box display="flex" alignItems="center" mb={0.5}>
@@ -376,7 +400,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
             <CardContent sx={{ py: 2 }}>
               <Box display="flex" alignItems="center" mb={0.5}>
@@ -387,7 +411,16 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Grid>
-      </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none', bgcolor: '#f0fdf4' }}>
+            <CardContent sx={{ py: 2 }}>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <Typography variant="body2" sx={{ color: '#16a34a', fontWeight: 600 }}>Total Revenue</Typography>
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: '#16a34a' }}>{formatRupee(stats.totalRevenue)}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
 
       {/* Tabs */}
       <Paper variant="outlined" sx={{ width: '100%', borderColor: '#e5e5e5', boxShadow: 'none' }}>
@@ -407,6 +440,7 @@ export default function AdminDashboard() {
           {currentUser && currentUser.role === 'superadmin' && (
             <Tab icon={<PeopleIcon />} label="Manage Users" />
           )}
+          <Tab icon={<ChatIcon />} label="Messages" />
         </Tabs>
 
         {/* Overview Tab */}
@@ -429,11 +463,24 @@ export default function AdminDashboard() {
                   <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
                     <CardContent sx={{ py: 2 }}>
                       <Box display="flex" alignItems="center" mb={0.5}>
-                        <AdminIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
-                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Admins</Typography>
+                        <PeopleIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Property Owners</Typography>
                       </Box>
                       <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
-                        {users.filter(u => u.role === 'admin').length}
+                        {users.filter(u => u.role === 'property_owner').length}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Card variant="outlined" sx={{ borderColor: '#e5e5e5', boxShadow: 'none' }}>
+                    <CardContent sx={{ py: 2 }}>
+                      <Box display="flex" alignItems="center" mb={0.5}>
+                        <AdminIcon sx={{ mr: 1, color: '#737373', fontSize: 20 }} />
+                        <Typography variant="body2" sx={{ color: '#737373', fontWeight: 500 }}>Managers</Typography>
+                      </Box>
+                      <Typography variant="h5" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
+                        {users.filter(u => u.role === 'manager').length}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -619,8 +666,8 @@ export default function AdminDashboard() {
             <Box>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Users</Typography>
-                  <Typography variant="body2" sx={{ color: '#737373' }}>Manage admin accounts</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Partners</Typography>
+                  <Typography variant="body2" sx={{ color: '#737373' }}>Manage platform partners and owners</Typography>
                 </Box>
                 <Button
                   variant="contained"
@@ -629,7 +676,7 @@ export default function AdminDashboard() {
                   onClick={() => handleOpenUserDialog()}
                   sx={{ bgcolor: '#0a0a0a', fontWeight: 500, '&:hover': { bgcolor: '#262626' } }}
                 >
-                  Add admin
+                  Add partner
                 </Button>
               </Box>
 
@@ -700,6 +747,22 @@ export default function AdminDashboard() {
             </Box>
           </TabPanel>
         )}
+
+        {/* Messages Tab */}
+        <TabPanel value={tabValue} index={currentUser?.role === 'superadmin' ? 4 : 3}>
+          <Box>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 0.5 }}>Messages</Typography>
+              <Typography variant="body2" sx={{ color: '#737373' }}>Respond to customer queries</Typography>
+            </Box>
+            
+            <Paper variant="outlined" sx={{ borderRadius: 2, borderColor: '#e5e5e5', boxShadow: 'none', p: 4, textAlign: 'center' }}>
+              <ChatIcon sx={{ fontSize: 48, color: '#a3a3a3', mb: 1.5 }} />
+              <Typography variant="body1" sx={{ color: '#737373', fontWeight: 500 }}>No messages yet</Typography>
+              <Typography variant="body2" sx={{ color: '#a3a3a3' }}>Customer queries will appear here</Typography>
+            </Paper>
+          </Box>
+        </TabPanel>
       </Paper>
     </Box>
 
@@ -868,7 +931,7 @@ export default function AdminDashboard() {
                 select
                 label="User Role"
                 value={userForm.role}
-                onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'admin' | 'superadmin' })}
+                onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'property_owner' | 'manager' | 'superadmin' })}
                 SelectProps={{
                   native: true,
                 }}
@@ -880,7 +943,8 @@ export default function AdminDashboard() {
                 }}
                 helperText={userForm.role === 'superadmin' ? 'Super admins can manage other users' : 'Admins can manage resorts and bookings'}
               >
-                <option value="admin">Admin</option>
+                <option value="property_owner">Property Owner</option>
+                <option value="manager">Manager</option>
                 <option value="superadmin">Super Admin</option>
               </TextField>
             </Grid>

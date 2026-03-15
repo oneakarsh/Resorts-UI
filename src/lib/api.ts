@@ -33,8 +33,11 @@ export const authAPI = {
 
 // Resort APIs
 export const resortAPI = {
-  getAll: (token?: string) => {
-    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  getAll: (params?: Record<string, any>, token?: string) => {
+    const config = {
+      ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+      params: params || {},
+    };
     return api.get('/resorts', config);
   },
   getById: (id: string, token?: string) => {
@@ -89,6 +92,10 @@ export const userAPI = {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.get('/users', config);
   },
+  getPropertyOwners: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/auth/property-owner/users', config);
+  },
   create: (data: Record<string, unknown>, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.post('/users', data, config);
@@ -100,5 +107,29 @@ export const userAPI = {
   delete: (id: string, token?: string) => {
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     return api.delete(`/users/${id}`, config);
+  },
+};
+
+// Dashboard APIs
+export const dashboardAPI = {
+  getSuperAdminStats: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/dashboard/super-admin', config);
+  },
+  getPropertyOwnerStats: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/dashboard/property-owner', config);
+  },
+};
+
+// Chat APIs
+export const chatAPI = {
+  getInbox: (token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.get('/chat/inbox', config);
+  },
+  sendMessage: (data: { receiverId: string; message: string; resortId?: string }, token?: string) => {
+    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return api.post('/chat/send', data, config);
   },
 };

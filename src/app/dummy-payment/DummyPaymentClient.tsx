@@ -1,15 +1,27 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Box, Typography, Paper, Button, Divider, CircularProgress, Snackbar } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Button, 
+  Divider, 
+  CircularProgress, 
+  Snackbar,
+  Stack,
+  TextField,
+  Grid
+} from '@mui/material';
 import { bookingAPI } from '@/lib/api';
 import { formatRupee } from '@/lib/formatRupee';
+// Oops, I saw the previous code used next/navigation
+import { useSearchParams as useNextSearchParams, useRouter as useNextRouter } from 'next/navigation';
 
 export default function DummyPaymentClient() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const searchParams = useNextSearchParams();
+  const router = useNextRouter();
   const { data: session, status } = useSession();
   const [bookingData, setBookingData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,39 +69,160 @@ export default function DummyPaymentClient() {
   };
 
   if (!bookingData) {
-    return <Box sx={{ py: 6, textAlign: 'center' }}><Typography>Preparing payment...</Typography></Box>;
+    return (
+      <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress sx={{ color: '#0a0a0a' }} />
+      </Box>
+    );
   }
 
   return (
-    <Box sx={{ maxWidth: 640, mx: 'auto', px: 2, py: 6 }}>
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Dummy Payment Gateway</Typography>
-        <Typography variant="body2" sx={{ color: '#737373', mb: 2 }}>This is a simulated payment page for development. No real payment is taken.</Typography>
+    <Box sx={{ maxWidth: 1000, mx: 'auto', px: 2, py: { xs: 4, md: 8 } }}>
+      <Grid container spacing={4}>
+        {/* Payment Form side */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.04em' }}>Payment</Typography>
+          <Typography variant="body1" sx={{ color: '#737373', mb: 5 }}>All transactions are secure and encrypted.</Typography>
 
-        <Divider sx={{ my: 2 }} />
+          {/* Dummy Credit Card */}
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 3, 
+              mb: 4, 
+              borderRadius: 4, 
+              background: 'linear-gradient(135deg, #0a0a0a 0%, #404040 100%)',
+              color: '#fff',
+              position: 'relative',
+              overflow: 'hidden',
+              minHeight: 200,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '0.1em' }}>PLATINUM</Typography>
+              <Box sx={{ width: 45, height: 30, bgcolor: 'rgba(255,255,255,0.2)', borderRadius: 1 }} />
+            </Box>
+            
+            <Typography variant="h5" sx={{ letterSpacing: '0.15em', my: 3, fontWeight: 500 }}>
+              ****  ****  ****  4242
+            </Typography>
 
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>{bookingData.resortName}</Typography>
-        <Typography variant="body2" sx={{ color: '#737373' }}>{bookingData.checkInDate} → {bookingData.checkOutDate}</Typography>
-        <Typography variant="body2" sx={{ color: '#737373', mb: 2 }}>Guests: {bookingData.numberOfGuests}</Typography>
+            <Box sx={{ display: 'flex', gap: 4 }}>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Card Holder</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>{session?.user?.name || 'GUEST USER'}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Expires</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>12/28</Typography>
+              </Box>
+            </Box>
+          </Paper>
 
-        <Typography variant="body2">Amenities: {(bookingData.selectedAmenities || []).join(', ') || 'None'}</Typography>
+          <Stack spacing={3}>
+            <TextField 
+              fullWidth 
+              label="Card Number" 
+              defaultValue="4242 4242 4242 4242"
+              disabled
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 8 }}>
+                <TextField 
+                  fullWidth 
+                  label="Name on Card" 
+                  defaultValue={session?.user?.name || ''}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+              </Grid>
+              <Grid size={{ xs: 4 }}>
+                <TextField 
+                  fullWidth 
+                  label="CVV" 
+                  defaultValue="***"
+                  disabled
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                />
+              </Grid>
+            </Grid>
+            <Button 
+              variant="contained" 
+              fullWidth 
+              size="large"
+              onClick={handlePay}
+              disabled={loading}
+              sx={{ 
+                bgcolor: '#0a0a0a', 
+                color: '#fff',
+                py: 2,
+                borderRadius: 3,
+                fontWeight: 700,
+                fontSize: '1rem',
+                '&:hover': { bgcolor: '#262626' }
+              }}
+            >
+              {loading ? <CircularProgress size={24} color="inherit" /> : `Pay ${formatRupee(bookingData.totalPrice)}`}
+            </Button>
+          </Stack>
+        </Grid>
 
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">Total</Typography>
-          <Typography variant="h6">{formatRupee(bookingData.totalPrice)}</Typography>
-        </Box>
+        {/* Summary side */}
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Paper 
+            variant="outlined" 
+            sx={{ 
+              p: 4, 
+              borderRadius: 6, 
+              borderColor: '#f0f0f0', 
+              bgcolor: '#fafafa',
+              position: 'sticky',
+              top: 100
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>Order Summary</Typography>
+            
+            <Stack spacing={2.5}>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ color: '#737373' }}>Resort</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{bookingData.resortName}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ color: '#737373' }}>Stay</Typography>
+                <Typography sx={{ fontWeight: 600, textAlign: 'right' }}>
+                  {bookingData.checkInDate} <br /> to {bookingData.checkOutDate}
+                </Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography sx={{ color: '#737373' }}>Guests</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{bookingData.numberOfGuests} Persons</Typography>
+              </Box>
+              
+              <Divider sx={{ my: 1, borderColor: '#e5e5e5' }} />
+              
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>Total</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 900 }}>{formatRupee(bookingData.totalPrice)}</Typography>
+              </Box>
 
-        <Divider sx={{ my: 2 }} />
+              <Typography variant="caption" sx={{ color: '#a3a3a3', textAlign: 'center', mt: 2 }}>
+                By clicking pay, you agree to our terms of service and booking policy.
+              </Typography>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="outlined" onClick={() => router.back()}>Cancel</Button>
-          <Button variant="contained" onClick={handlePay} disabled={loading} sx={{ bgcolor: '#0a0a0a', '&:hover': { bgcolor: '#262626' } }}>
-            {loading ? <CircularProgress size={18} color="inherit" /> : 'Pay now'}
-          </Button>
-        </Box>
-      </Paper>
-
-      <Snackbar open={snackOpen} message="Payment successful — booking confirmed" autoHideDuration={2000} onClose={() => setSnackOpen(false)} />
+      <Snackbar 
+        open={snackOpen} 
+        message="Payment successful — booking confirmed" 
+        autoHideDuration={2000} 
+        onClose={() => setSnackOpen(false)} 
+      />
     </Box>
   );
 }
+

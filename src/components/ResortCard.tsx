@@ -5,8 +5,6 @@ import {
   Card,
   CardContent,
   CardMedia,
-  CardActions,
-  Button,
   Typography,
   Box,
   Chip,
@@ -15,6 +13,7 @@ import {
 } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import StarIcon from '@mui/icons-material/Star';
 import { Resort } from '@/types';
 import { useRouter } from 'next/navigation';
 import { formatRupee } from '@/lib/formatRupee';
@@ -27,147 +26,187 @@ interface ResortCardProps {
 export default function ResortCard({ resort, promoted }: ResortCardProps) {
   const router = useRouter();
   const [wishlisted, setWishlisted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
-  const handleBookNow = () => {
+  const handleNavigate = () => {
     const id = resort.id ?? resort._id;
     if (!id) return;
     router.push(`/resorts/${id}`);
   };
 
+  const imageUrl = (((resort as any).images?.[0]) ?? resort.image) ?? 
+    `https://images.unsplash.com/photo-1540553016722-983e48a2cd10?auto=format&fit=crop&w=800&q=80`;
+
   return (
     <Card
       elevation={0}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleNavigate}
       sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 2,
-        border: '1px solid #e5e5e5',
-        overflow: 'hidden',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        borderRadius: 4,
+        position: 'relative',
+        cursor: 'pointer',
+        bgcolor: 'transparent',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          borderColor: '#d4d4d4',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+          transform: 'translateY(-4px)',
         },
       }}
     >
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: 4, height: 280 }}>
         {promoted && (
           <Box
             sx={{
               position: 'absolute',
-              top: 10,
-              left: 10,
-              zIndex: 1,
-              px: 1,
-              py: 0.25,
-              borderRadius: 999,
-              bgcolor: 'rgba(255,255,255,0.9)',
-              border: '1px solid #e5e5e5',
+              top: 16,
+              left: 16,
+              zIndex: 2,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 2,
+              bgcolor: 'rgba(10, 10, 10, 0.8)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
             <Typography
               variant="caption"
-              sx={{ fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#737373' }}
+              sx={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff' }}
             >
-              Promoted
+              Featured
             </Typography>
           </Box>
         )}
+        
         <IconButton
           size="small"
-          onClick={() => setWishlisted(!wishlisted)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setWishlisted(!wishlisted);
+          }}
           sx={{
             position: 'absolute',
-            top: 8,
-            right: 8,
-            bgcolor: 'rgba(255,255,255,0.9)',
-            zIndex: 1,
-            '&:hover': { bgcolor: '#fff' },
+            top: 16,
+            right: 16,
+            bgcolor: 'rgba(255, 255, 255, 0.9)',
+            zIndex: 2,
+            backdropFilter: 'blur(4px)',
+            '&:hover': { bgcolor: '#fff', transform: 'scale(1.1)' },
+            transition: 'all 0.2s',
           }}
         >
           {wishlisted ? (
-            <FavoriteIcon fontSize="small" sx={{ color: '#dc2626' }} />
+            <FavoriteIcon fontSize="small" sx={{ color: '#ef4444' }} />
           ) : (
-            <FavoriteBorderIcon fontSize="small" sx={{ color: '#737373' }} />
+            <FavoriteBorderIcon fontSize="small" sx={{ color: '#0a0a0a' }} />
           )}
         </IconButton>
 
         <CardMedia
-          sx={{ height: 180 }}
-          image={
-            (((resort as any).images?.[0]) ?? resort.image) ?? `https://via.placeholder.com/400x300?text=${encodeURIComponent(resort.name)}`
-          }
+          component="img"
+          sx={{ 
+            height: '100%', 
+            width: '100%',
+            objectFit: 'cover',
+            transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+          }}
+          image={imageUrl}
+          alt={resort.name}
+        />
+        
+        {/* Subtle overlay for better legibility when we add text over image */}
+        <Box 
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '40%',
+            background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%)',
+            pointerEvents: 'none',
+          }}
         />
       </Box>
 
-      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+      <CardContent sx={{ px: 1, py: 2, flexGrow: 1 }}>
         <Stack spacing={1}>
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              noWrap
-              sx={{ flexGrow: 1, fontSize: '0.9375rem', letterSpacing: '-0.01em' }}
+              variant="h6"
+              sx={{ 
+                fontWeight: 700, 
+                fontSize: '1.125rem', 
+                color: '#0a0a0a',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: 'vertical',
+              }}
             >
               {resort.name}
             </Typography>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ color: '#0a0a0a', whiteSpace: 'nowrap' }}>
-              {formatRupee(resort.pricePerNight)}
-              <Typography component="span" variant="caption" sx={{ color: '#737373', fontWeight: 400 }}>
-                /night
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <StarIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#0a0a0a' }}>
+                {resort.rating || '4.8'}
               </Typography>
+            </Box>
+          </Box>
+
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: '#737373', 
+              fontSize: '0.875rem',
+              display: '-webkit-box',
+              WebkitLineClamp: 1,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
+          >
+            {resort.location}
+          </Typography>
+
+          <Box display="flex" gap={1} pt={0.5}>
+            <Typography variant="body1" sx={{ fontWeight: 700, color: '#0a0a0a', fontSize: '1rem' }}>
+              {formatRupee(resort.pricePerNight)}
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#737373', fontSize: '0.875rem', alignSelf: 'center' }}>
+              per night
             </Typography>
           </Box>
 
-          <Box display="flex" gap={0.5} flexWrap="wrap">
+          <Box display="flex" gap={0.5} pt={1} flexWrap="wrap">
             {resort.amenities?.slice(0, 3).map((amenity) => (
               <Chip
                 key={amenity}
                 label={amenity}
                 size="small"
-                variant="outlined"
                 sx={{
-                  fontSize: '0.6875rem',
-                  height: 20,
-                  borderColor: '#e5e5e5',
-                  color: '#737373',
+                  height: 24,
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                  bgcolor: '#f5f5f5',
+                  color: '#404040',
+                  border: 'none',
+                  '& .MuiChip-label': { px: 1 }
                 }}
               />
             ))}
+            {resort.amenities && resort.amenities.length > 3 && (
+              <Typography variant="caption" sx={{ color: '#a3a3a3', alignSelf: 'center', ml: 0.5 }}>
+                +{resort.amenities.length - 3} more
+              </Typography>
+            )}
           </Box>
-
-          <Typography variant="caption" sx={{ color: '#737373' }}>
-            {resort.location}
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#737373' }}>
-            {resort.maxGuests} guests · {resort.rooms} rooms
-          </Typography>
         </Stack>
       </CardContent>
-
-      <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
-        <Button
-          fullWidth
-          variant="outlined"
-          size="medium"
-          onClick={handleBookNow}
-          sx={{
-            borderRadius: 1.5,
-            fontWeight: 500,
-            fontSize: '0.875rem',
-            py: 1,
-            borderColor: '#0a0a0a',
-            color: '#0a0a0a',
-            '&:hover': {
-              borderColor: '#0a0a0a',
-              bgcolor: 'rgba(0,0,0,0.04)',
-            },
-          }}
-        >
-          View resort
-        </Button>
-      </CardActions>
     </Card>
   );
 }

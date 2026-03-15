@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
@@ -29,6 +30,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import ChatIcon from '@mui/icons-material/Chat';
 import { formatRupee } from '@/lib/formatRupee';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -67,6 +69,11 @@ export default function BookingPage() {
   // Nearby attractions state
   const [attractionDialogOpen, setAttractionDialogOpen] = useState(false);
   const [selectedAttraction, setSelectedAttraction] = useState<any>(null);
+
+  // Chat state
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   const AMENITY_ADDON_RUPEES = 4000;
 
@@ -231,6 +238,37 @@ export default function BookingPage() {
     const qs = encodeURIComponent(JSON.stringify(bookingData));
     window.location.href = `/dummy-payment?data=${qs}`;
   };
+
+  const handleOpenChat = () => {
+    if (status !== 'authenticated') {
+      router.push('/login');
+      return;
+    }
+    setChatDialogOpen(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!chatMessage.trim()) return;
+    try {
+      setChatLoading(true);
+      // In a real app, we'd get the ownerId from the resort data
+      // For now, we'll use a placeholder or the backend will handle it
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'}/chat/send`, {
+        message: chatMessage,
+        resortId: resort?.id || resort?._id,
+      }, {
+        headers: { Authorization: `Bearer ${session?.accessToken}` }
+      });
+      setChatMessage('');
+      setNotificationOpen(true);
+      setChatDialogOpen(false);
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      setError('Failed to send message');
+    } finally {
+      setChatLoading(false);
+    }
+  };
   // Booking is handled on /dummy-payment after payment is simulated
 
   const amenityDetails: Record<string, { image: string; description: string }> = {
@@ -382,6 +420,22 @@ export default function BookingPage() {
                     {formatRupee(resort.pricePerNight)} per night
                   </Typography>
 
+                  <Box sx={{ mb: 3 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<ChatIcon />}
+                      onClick={handleOpenChat}
+                      sx={{
+                        borderColor: '#0a0a0a',
+                        color: '#0a0a0a',
+                        fontWeight: 500,
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.04)', borderColor: '#0a0a0a' },
+                      }}
+                    >
+                      Chat with Owner
+                    </Button>
+                  </Box>
+
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#0a0a0a', mb: 1 }}>
                     Amenities
                   </Typography>
@@ -499,8 +553,6 @@ export default function BookingPage() {
             sx={{
               display: 'flex',
               gap: 2,
-              overflowX: 'auto',
-              pb: 2,
               scrollSnapType: 'x mandatory',
               WebkitOverflowScrolling: 'touch',
               '& > *': { scrollSnapAlign: 'start', flexShrink: 0 },
@@ -564,6 +616,38 @@ export default function BookingPage() {
             ))}
           </Box>
         </Box>
+        <Snackbar open={notificationOpen} message="Message sent successfully!" autoHideDuration={3000} onClose={() => setNotificationOpen(false)} />
+
+        {/* Chat Dialog */}
+        <Dialog open={chatDialogOpen} onClose={() => setChatDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600 }}>Chat with Owner</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2, color: '#737373' }}>
+              Ask questions about {resort.name} or request special arrangements.
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              placeholder="Type your message here..."
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setChatDialogOpen(false)} sx={{ color: '#737373' }}>Cancel</Button>
+            <Button
+              onClick={handleSendMessage}
+              variant="contained"
+              disabled={chatLoading || !chatMessage.trim()}
+              sx={{ bgcolor: '#0a0a0a', '&:hover': { bgcolor: '#262626' } }}
+            >
+              {chatLoading ? <CircularProgress size={24} color="inherit" /> : 'Send Message'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </LocalizationProvider>
   );
